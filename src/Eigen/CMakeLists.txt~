@@ -1,3 +1,0 @@
-include_directories(.)
-file(GLOB Eigen_directory_files "*")
-add_subdirectory(src)
