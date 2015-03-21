@@ -1,2 +1,4 @@
 /build/
-/models/
+/src/Eigen/
+/src/flann/
+
