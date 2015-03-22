@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.6)
 project(BubblesMotionPlanning)
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp -O -std=c++11 -Wall")
 enable_testing()
 add_subdirectory(src)

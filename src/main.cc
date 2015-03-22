@@ -60,7 +60,7 @@ int main() {
   b2->AddTri(tri3[0], tri3[1], tri3[2], 0);
   b2->AddTri(tri4[0], tri4[1], tri4[2], 1);
   obs->AddTri(tri5[0], tri5[1], tri5[2], 0);
-  
+
   b1->EndModel();
   b2->EndModel();
   obs->EndModel();
@@ -93,8 +93,6 @@ int main() {
   v << 0.0, 0.0, 0.0;
   std::cout << R1 * v << std::endl;
   std::cout << R2 * v + R1 * dh1T << std::endl;
-  
-  PQP_REAL Rtest[3][3];
 
 // perform a collision query
 

@@ -1,8 +1,14 @@
 include_directories(.)
 add_subdirectory(PQP)
+add_subdirectory(random_generator)
 
 add_library(dh_parameter dh_parameter.cc)
 target_link_libraries(dh_parameter)
+
+add_library(pqp_environment pqp_environment.cc)
+target_link_libraries(pqp_environment
+                      PQP
+                      dh_parameter)
 
 add_executable(main main.cc)
 target_link_libraries(main
