@@ -4,12 +4,17 @@ add_subdirectory(random_generator)
 add_subdirectory(debugging)
 
 add_library(dh_parameter dh_parameter.cc)
-target_link_libraries(dh_parameter)
+target_link_libraries(dh_parameter
+                      PQP)
 
 add_library(pqp_environment pqp_environment.cc)
 target_link_libraries(pqp_environment
                       PQP
                       dh_parameter)
+
+add_library(simple_tree simple_tree.cc)
+target_link_libraries(simple_tree
+                      pqp_environment)
 
 add_executable(main main.cc)
 target_link_libraries(main
@@ -19,7 +24,7 @@ target_link_libraries(main
 add_executable(dh_parameter_test dh_parameter_test.cc)
 target_link_libraries(dh_parameter_test
                       dh_parameter
-		                  boost_unit_test_framework)
+                      boost_unit_test_framework)
 add_test(DH_PARAMETER_TEST ${CMAKE_CURRENT_BINARY_DIR}/dh_parameter_test)
 
 add_executable(pqp_environment_test pqp_environment_test.cc)
@@ -27,4 +32,12 @@ target_link_libraries(pqp_environment_test
                       pqp_environment
                       naive_generator
                       boost_unit_test_framework)
-add_test(DH_PARAMETER_TEST ${CMAKE_CURRENT_BINARY_DIR}/pqp_environment_test)
+add_test(PQP_ENVIRONMENT_TEST ${CMAKE_CURRENT_BINARY_DIR}/pqp_environment_test)
+
+add_executable(simple_tree_test simple_tree_test.cc)
+target_link_libraries(simple_tree_test
+                      simple_tree
+                      pqp_environment
+                      naive_generator
+                      boost_unit_test_framework)
+add_test(SIMPLE_TREE_TEST ${CMAKE_CURRENT_BINARY_DIR}/simple_tree_test)
