@@ -145,12 +145,11 @@ bool PqpEnvironment::GenerateSampleSpace(
     std::unique_ptr<double[]> points_array (
       std::move(
         (random_generator->CreateSampleSpace(sample_space_size))));
-
     // Create configuration sample space
-    conf_sample_space_ = std::unique_ptr<FlannPointArray>(
-      new FlannPointArray (
+    conf_sample_space_ = new FlannPointArray (
       flann::Matrix<double> (points_array.release(), sample_space_size,
-      segments_.size()), flann::KDTreeIndexParams(4)));
+      static_cast<int>(segments_.size())), flann::KDTreeIndexParams(4));
+    conf_sample_space_->buildIndex();
     return true;
   } catch (...) {
     return false;
@@ -181,4 +180,18 @@ double PqpEnvironment::CheckCollision(EVectorXd& q) {
     dh_table_.at(i).Transform(R, T);
   }
   return min_distance;
+}
+
+std::vector<int> PqpEnvironment::KnnQuery(EVectorXd& q, int k) {
+  flann::Matrix<double> query (q.data(), 1, q.size());
+
+  std::vector<int> vector_indices (k);
+  flann::Matrix<int> indices (vector_indices.data(), 1, k);
+  flann::Matrix<double> dists (new double[k], 1, k);
+
+  conf_sample_space_->knnSearch(query, indices, dists, k,
+                               flann::SearchParams(128));
+
+  delete[] dists.ptr();
+  return vector_indices;
 }

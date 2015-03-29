@@ -23,7 +23,11 @@ public:
                  const int sample_space_size = 1000000);
 
   int sample_space_size() { return sample_space_size_; }
+  double* GetPoint(int point_index) {
+    return conf_sample_space_->getPoint(point_index); }
   double CheckCollision(EVectorXd& q);
+  // KnnQuery returns indexes
+  std::vector<int> KnnQuery(EVectorXd& q, int k);
 
 private:
   bool LoadRobotModel(const std::string& robot_mode_file);
@@ -36,7 +40,7 @@ private:
   std::unique_ptr<PQP_Model> obstacles_;
   std::vector<std::unique_ptr<PQP_Model>> segments_;
   std::vector<DhParameter> dh_table_;
-  std::unique_ptr<FlannPointArray> conf_sample_space_;
+  FlannPointArray* conf_sample_space_;
   int sample_space_size_;
 };
 
