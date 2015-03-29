@@ -1,20 +1,22 @@
+#include "pqp_environment.h"
+
 #include <fstream>
 #include <sstream>
 #include <string>
 #include <algorithm>
 
-#include "pqp_environment.h"
-#include "Eigen/Dense"
-#include "Eigen/Geometry"
+#include <Eigen/Dense>
+#include <Eigen/Geometry>
 #include <iostream>
 
 PqpEnvironment::PqpEnvironment(const std::string& robot_model_file,
                                const std::string& dh_table_file,
                                const std::string& obstacles_model_file,
-                               RandomPointGeneratorInterface *random_generator,
+                               RandomSpaceGeneratorInterface *random_generator,
                                const int sample_space_size) :
                                obstacles_(new PQP_Model),
-                               conf_sample_space_(nullptr) {
+                               conf_sample_space_(nullptr),
+                               sample_space_size_(sample_space_size) {
   if(!LoadRobotModel(robot_model_file)) throw "Robot model problem!";
   if(!LoadDhTable(dh_table_file)) throw "DH table problem!";
   if(!LoadObstacles(obstacles_model_file)) throw "Obstacles problem!";
@@ -135,24 +137,19 @@ bool PqpEnvironment::LoadObstacles(const std::string& obstacles_model_file) {
 }
 
 bool PqpEnvironment::GenerateSampleSpace(
-    RandomPointGeneratorInterface* random_generator,
+    RandomSpaceGeneratorInterface* random_generator,
     const int sample_space_size) {
 
   try {
-    std::unique_ptr<double> points_array (
-      new double[sample_space_size * segments_.size()]); // segments_.size()
-                                                         // tells the dimension
-    std::vector<double> point;
-    for (int i = 0; i < sample_space_size; ++i)
-    {
-      point = random_generator->NextPoint();
-      std::move (point.begin(), point.end(),
-                 points_array.get() + i * segments_.size());
-      // segments_.size() = point.size() <- dimension
-    }
+    // Initialize points_array from sample space generator
+    std::unique_ptr<double[]> points_array (
+      std::move(
+        (random_generator->CreateSampleSpace(sample_space_size))));
+
+    // Create configuration sample space
     conf_sample_space_ = std::unique_ptr<FlannPointArray>(
       new FlannPointArray (
-      flann::Matrix<double> (points_array.get(), sample_space_size,
+      flann::Matrix<double> (points_array.release(), sample_space_size,
       segments_.size()), flann::KDTreeIndexParams(4)));
     return true;
   } catch (...) {
@@ -160,7 +157,7 @@ bool PqpEnvironment::GenerateSampleSpace(
   }
 }
 
-double PqpEnvironment::CheckCollision(std::vector<double> q) {
+double PqpEnvironment::CheckCollision(EVectorXd& q) {
   typedef Eigen::Matrix<double, 3, 3, Eigen::RowMajor> EMatrix;
   typedef Eigen::Vector3d EVector;
 
@@ -173,7 +170,7 @@ double PqpEnvironment::CheckCollision(std::vector<double> q) {
   PQP_DistanceResult distance_res;
   double min_distance (INFINITY); // Initialized at infinity
   for (size_t i (0); i < segments_.size(); ++i) {
-    R = R * Eigen::AngleAxisd(q.at(i), EVector::UnitZ());
+    R = R * Eigen::AngleAxisd(q[i], EVector::UnitZ());
     PQP_Distance(&distance_res, reinterpret_cast<PQP_REAL(*)[3]>(R.data()),
       T.data(), segments_.at(i).get(),
       reinterpret_cast<PQP_REAL(*)[3]>(R_obs.data()), T_obs.data(),
