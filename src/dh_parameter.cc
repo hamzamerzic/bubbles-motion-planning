@@ -1,4 +1,5 @@
 #include "dh_parameter.h"
+
 #include <cmath>
 
 DhParameter::DhParameter(const double theta,

@@ -1,7 +1,7 @@
 #include <cmath>
 #include <cstdio>
-#include "PQP/PQP.h"
-#include "Eigen/Dense"
+#include <PQP/PQP.h>
+#include <Eigen/Dense>
 #include <iostream>
 
 #define LISTS 1
@@ -21,7 +21,6 @@ void DHTable(double theta, double d, double a, double alpha,
 
 int main() {
   // initialize PQP model pointers
-
 
   PQP_Model *b1 = new PQP_Model;
   PQP_Model *b2 = new PQP_Model;

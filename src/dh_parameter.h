@@ -5,8 +5,8 @@
 #include <string>
 #include <memory>
 #include <cmath>
-#include "PQP/PQP.h"
-#include "Eigen/Dense"
+#include <PQP/PQP.h>
+#include <Eigen/Dense>
 
 
 // Check to place these typedefs in a namespace, or in the class definition
