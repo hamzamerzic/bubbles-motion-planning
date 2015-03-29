@@ -17,5 +17,8 @@ bool SimpleTree::TryConnect (EVectorXd& point1, EVectorXd& point2) {
 }
 
 bool SimpleTree::AddPoint(int point_index) {
+  if (visited_.at(point_index)) return true;
+  visited_.at(point_index) = true;
+
   return true;
 }
