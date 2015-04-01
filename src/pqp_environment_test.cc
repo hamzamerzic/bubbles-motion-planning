@@ -19,8 +19,8 @@ BOOST_AUTO_TEST_CASE(constructor) {
   limits.emplace_back(0, 2 * M_PI);
   std::unique_ptr<RandomSpaceGeneratorInterface> generator (
     new NaiveGenerator(limits));
-  PqpEnvironment pqp ("robot_test.txt", "dh_table_test.txt",
-    "obstacles_test.stl", generator.get());
+  PqpEnvironment pqp ({"robot1_seg1.stl", "robot1_seg2.stl"},
+      "dh_table_test.txt","obstacles_test.stl", generator.get());
 
   EVectorXd q (2); q << M_PI_2, M_PI_2;
   double test = pqp.CheckCollision(q);
@@ -33,8 +33,8 @@ BOOST_AUTO_TEST_CASE(collision_query1) {
   limits.emplace_back(0, 2 * M_PI);
   std::unique_ptr<RandomSpaceGeneratorInterface> generator (
     new NaiveGenerator(limits));
-  PqpEnvironment pqp ("robot_test.txt", "dh_table_test.txt",
-    "obstacles_test.stl", generator.get());
+  PqpEnvironment pqp ({"robot1_seg1.stl", "robot1_seg2.stl"},
+      "dh_table_test.txt", "obstacles_test.stl", generator.get());
 
   EVectorXd q (2); q << M_PI_2, 0;
   double test = pqp.CheckCollision(q);
@@ -47,8 +47,8 @@ BOOST_AUTO_TEST_CASE(collision_query2) {
   limits.emplace_back(0, 2 * M_PI);
   std::unique_ptr<RandomSpaceGeneratorInterface> generator (
     new NaiveGenerator(limits));
-  PqpEnvironment pqp ("robot_test.txt", "dh_table_test2.txt",
-    "obstacles_test2.stl", generator.get());
+  PqpEnvironment pqp ({"robot1_seg1.stl", "robot1_seg2.stl"},
+      "dh_table_test2.txt", "obstacles_test2.stl", generator.get());
 
   EVectorXd q (2); q << M_PI_2, M_PI_2;
   double test = pqp.CheckCollision(q);
@@ -61,8 +61,8 @@ BOOST_AUTO_TEST_CASE(collision_query3) {
   limits.emplace_back(0, 2 * M_PI);
   std::unique_ptr<RandomSpaceGeneratorInterface> generator (
     new NaiveGenerator(limits));
-  PqpEnvironment pqp ("robot_test3.txt", "dh_table_test3.txt",
-    "obstacles_test3.stl", generator.get());
+  PqpEnvironment pqp ({"robot2_seg1.stl", "robot2_seg2.stl", "robot2_seg3.stl"},
+      "dh_table_test3.txt", "obstacles_test3.stl", generator.get());
 
   EVectorXd q (3); q << M_PI_2, M_PI_2, M_PI_2;
   double test = pqp.CheckCollision(q);
@@ -75,8 +75,8 @@ BOOST_AUTO_TEST_CASE(knn_query) {
   limits.emplace_back(0, 2 * M_PI);
   std::unique_ptr<RandomSpaceGeneratorInterface> generator (
     new NaiveGenerator(limits));
-  PqpEnvironment pqp ("robot_test.txt", "dh_table_test2.txt",
-    "obstacles_test2.stl", generator.get(), 1000);
+  PqpEnvironment pqp ({"robot1_seg1.stl", "robot1_seg2.stl"},
+      "dh_table_test2.txt", "obstacles_test2.stl", generator.get(), 1000);
 
   EVectorXd q (2); q << M_PI_2, M_PI_2;
   std::vector<int> indices (pqp.KnnQuery(q, 5));

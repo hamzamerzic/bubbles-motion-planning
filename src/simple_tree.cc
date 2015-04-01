@@ -1,5 +1,4 @@
 #include "simple_tree.h"
-#include <iostream>
 
 bool SimpleTree::TryConnect (EVectorXd& point1, EVectorXd& point2) {
   EVectorXd point_step = (point2 - point1).normalized() * step_size_;
@@ -45,7 +44,6 @@ bool SimpleTree::BuildTree() {
   parents_.at(start_index) = start_index;
 
   while (!pq_.empty()) {
-    std::cerr << pq_.size() << std::endl;
     Edge current_edge (pq_.top()); pq_.pop();
     if (current_edge.point_index == end_index) return true;
     AddPoint(current_edge.point_index);

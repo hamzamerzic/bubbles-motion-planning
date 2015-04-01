@@ -16,7 +16,7 @@ class PqpEnvironment {
   typedef flann::Index<flann::L2<double>> FlannPointArray;
   typedef Eigen::VectorXd EVectorXd;
 public:
-  PqpEnvironment(const std::string& robot_model_file,
+  PqpEnvironment(const std::vector<std::string>& robot_model_files,
                  const std::string& dh_table_file,
                  const std::string& obstacles_model_file,
                  RandomSpaceGeneratorInterface* random_generator,
@@ -34,7 +34,7 @@ public:
   std::vector<int> KnnQuery(EVectorXd& q, int k);
 
 private:
-  bool LoadRobotModel(const std::string& robot_mode_file);
+  bool LoadRobotModel(const std::vector<std::string>& robot_mode_files);
   bool LoadDhTable(const std::string& dh_table_file);
   bool LoadObstacles(const std::string& obstacles_model_file);
   bool GenerateSampleSpace(

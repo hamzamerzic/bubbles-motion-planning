@@ -7,9 +7,9 @@
 
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
-#include <iostream>
 
-PqpEnvironment::PqpEnvironment(const std::string& robot_model_file,
+PqpEnvironment::PqpEnvironment(const std::vector<std::string>&
+                                   robot_model_files,
                                const std::string& dh_table_file,
                                const std::string& obstacles_model_file,
                                RandomSpaceGeneratorInterface *random_generator,
@@ -17,7 +17,7 @@ PqpEnvironment::PqpEnvironment(const std::string& robot_model_file,
                                obstacles_(new PQP_Model),
                                conf_sample_space_(nullptr),
                                sample_space_size_(sample_space_size) {
-  if(!LoadRobotModel(robot_model_file)) throw "Robot model problem!";
+  if(!LoadRobotModel(robot_model_files)) throw "Robot model problem!";
   if(!LoadDhTable(dh_table_file)) throw "DH table problem!";
   if(!LoadObstacles(obstacles_model_file)) throw "Obstacles problem!";
   if(!GenerateSampleSpace(random_generator, sample_space_size))
@@ -26,47 +26,18 @@ PqpEnvironment::PqpEnvironment(const std::string& robot_model_file,
 }
 
 //TODO: Link number of segments
-bool PqpEnvironment::LoadRobotModel(const std::string& robot_model_file) {
-  std::ifstream input_file (robot_model_file.c_str());
-  if (input_file) {
-    try {
-      input_file.seekg(0, std::ios::end); //End of file
-      std::streampos length (input_file.tellg()); //Read the size
-      input_file.seekg(0, std::ios::beg); //Return to beginning
-      std::vector<char> buffer (length);
-      input_file.read(&buffer[0], length);
-      //Move buffer to stringstream parser
-      std::stringstream parser;
-      parser.rdbuf()->pubsetbuf(&buffer[0], length);
-      //TODO: Make a function
-      PQP_REAL tri1[3][3], tri2[3][3]; //to read these numbers
-      //segments_.resize(num_segments);
-      while (!parser.eof())
-      {
-        //Need to know number of segments and number of triangles
-        //for each segment.
-        //For now I assume each segment holds two triangles.
-        int last (segments_.size());
-        segments_.emplace_back(std::unique_ptr<PQP_Model> (new PQP_Model));
-        segments_.at(last)->BeginModel();
-        parser >> tri1[0][0] >> tri1[0][1] >> tri1[0][2] >>
-        tri1[1][0] >> tri1[1][1] >> tri1[1][2] >>
-        tri1[2][0] >> tri1[2][1] >> tri1[2][2];
-        segments_.at(last)->AddTri(tri1[0], tri1[1], tri1[2], 0);
-        parser >> tri2[0][0] >> tri2[0][1] >> tri2[0][2] >>
-        tri2[1][0] >> tri2[1][1] >> tri2[1][2] >>
-        tri2[2][0] >> tri2[2][1] >> tri2[2][2];
-        segments_.at(last)->AddTri(tri2[0], tri2[1], tri2[2], 1);
-        segments_.at(last)->EndModel();
-      }
-      //TODO: Add parsing options for two segment hand and test the results
-      return true;
-    }
-    catch(...) { //TODO: Improve this catch block
-      throw "File error!";
-    }
+bool PqpEnvironment::LoadRobotModel(
+    const std::vector<std::string>& robot_model_files) {
+  try {
+    for (const auto& model_file : robot_model_files)
+      segments_.emplace_back(ParseModel(model_file));
+
+    return true;
   }
-return false; //Input file not present
+  catch (...) {
+    throw;
+  }
+  return false; //Input file not present
 }
 
 bool PqpEnvironment::LoadDhTable(const std::string& dh_table_file) {
@@ -114,7 +85,6 @@ bool PqpEnvironment::LoadObstacles(const std::string& obstacles_model_file) {
 bool PqpEnvironment::GenerateSampleSpace(
     RandomSpaceGeneratorInterface* random_generator,
     const int sample_space_size) {
-
   try {
     // Initialize points_array from sample space generator
     std::unique_ptr<double[]> points_array (

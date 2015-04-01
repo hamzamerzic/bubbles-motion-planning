@@ -19,8 +19,9 @@ BOOST_AUTO_TEST_CASE(try_connect) {
   limits.emplace_back(0, 2 * M_PI);
   std::unique_ptr<RandomSpaceGeneratorInterface> generator (
     new NaiveGenerator(limits));
-  PqpEnvironment* pqp (new PqpEnvironment("robot_test.txt", "dh_table_test.txt",
-    "obstacles_test.txt", generator.get()));
+  PqpEnvironment* pqp (new PqpEnvironment(
+      {"robot1_seg1.stl", "robot1_seg2.stl"},
+      "dh_table_test.txt","obstacles_test.stl", generator.get()));
 
   EVectorXd start (2); start << 0, 0;
   EVectorXd end (2); end << 1, 1;
@@ -36,8 +37,9 @@ BOOST_AUTO_TEST_CASE(try_connect1) {
   limits.emplace_back(0, 2 * M_PI);
   std::unique_ptr<RandomSpaceGeneratorInterface> generator (
     new NaiveGenerator(limits));
-  PqpEnvironment* pqp (new PqpEnvironment("robot_test.txt", "dh_table_test.txt",
-    "obstacles_test.txt", generator.get()));
+  PqpEnvironment* pqp (new PqpEnvironment(
+      {"robot1_seg1.stl", "robot1_seg2.stl"},
+      "dh_table_test.txt","obstacles_test.stl", generator.get()));
 
   EVectorXd start (2); start << 0, 0;
   EVectorXd end (2); end << 1, 1;
