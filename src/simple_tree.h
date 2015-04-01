@@ -9,25 +9,29 @@
 #include "pqp_environment.h"
 
 struct Edge {
-  int point_index;
+  Edge(size_t point_index, double distance): point_index(point_index),
+                                             distance(distance) {}
+  size_t point_index;
   double distance;
 };
 
 struct EdgeCompareFunctor {
   bool operator() (const Edge& e1, const Edge& e2) const {
-    return e1.distance < e2.distance;
+    return e1.distance > e2.distance;
   }
 };
 
 class SimpleTree : PrmTree {
 public:
-  SimpleTree(PqpEnvironment* pqp_environment, double step_size,
-             double collision_limit = 0.01):
-      PrmTree(pqp_environment), step_size_(step_size),
-      collision_limit_(collision_limit) {}
+  SimpleTree(PqpEnvironment* pqp_environment, EVectorXd& start, EVectorXd& end,
+      double step_size,double collision_limit = 0.01):
+      PrmTree(pqp_environment, start, end),
+      parents_(std::vector<int>(space_size_, -1)),
+      step_size_(step_size), collision_limit_(collision_limit) {}
 
   virtual bool TryConnect(EVectorXd& point1, EVectorXd& point2);
   virtual bool AddPoint(int point_index);
+  virtual bool BuildTree();
 
 private:
   std::vector<int> parents_;

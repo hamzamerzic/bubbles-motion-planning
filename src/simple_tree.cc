@@ -1,4 +1,5 @@
 #include "simple_tree.h"
+#include <iostream>
 
 bool SimpleTree::TryConnect (EVectorXd& point1, EVectorXd& point2) {
   EVectorXd point_step = (point2 - point1).normalized() * step_size_;
@@ -20,5 +21,34 @@ bool SimpleTree::AddPoint(int point_index) {
   if (visited_.at(point_index)) return true;
   visited_.at(point_index) = true;
 
+  int space_dimension (pqp_environment_->dimension());
+  EVectorXd current_point = EVectorXd::Map(
+    pqp_environment_->GetPoint(point_index), space_dimension);
+  std::vector<int> query_indexes (pqp_environment_->KnnQuery(current_point, 5));
+
+  for (auto& index : query_indexes) {
+    EVectorXd temp = EVectorXd::Map(pqp_environment_->GetPoint(index),
+      space_dimension);
+    if(!visited_.at(index) && TryConnect(current_point, temp))
+    {
+      pq_.push(Edge(index, (end_ - temp).norm()));
+      parents_.at(index) = point_index;
+    }
+  }
   return true;
+}
+
+bool SimpleTree::BuildTree() {
+  size_t start_index (pqp_environment_->AddPoint(start_)),
+    end_index (pqp_environment_->AddPoint(end_));
+  pq_.push(Edge(start_index, (end_ - start_).norm()));
+  parents_.at(start_index) = start_index;
+
+  while (!pq_.empty()) {
+    std::cerr << pq_.size() << std::endl;
+    Edge current_edge (pq_.top()); pq_.pop();
+    if (current_edge.point_index == end_index) return true;
+    AddPoint(current_edge.point_index);
+  }
+  throw "Empty!";
 }
