@@ -11,8 +11,8 @@
 
 // Check to place these typedefs in a namespace, or in the class definition
 // because it is also used in pqp environment
-typedef Eigen::Matrix<double, 3, 3, Eigen::RowMajor> EMatrix;
-typedef Eigen::Vector3d EVector;
+typedef Eigen::Matrix<float, 3, 3, Eigen::RowMajor> EMatrix;
+typedef Eigen::Vector3f EVector;
 typedef PQP_REAL PqpQueryType[3];   //Return type for cleaner code
                                     //Needed for PQP query
 

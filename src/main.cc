@@ -7,8 +7,8 @@
 #define LISTS 1
 
 const double seg_width = 0.0001;
-typedef Eigen::Matrix<double, 3, 3, Eigen::RowMajor> Matrix;
-typedef Eigen::Vector3d Vector;
+typedef Eigen::Matrix<float, 3, 3, Eigen::RowMajor> Matrix;
+typedef Eigen::Vector3f Vector;
 
 void DHTable(double theta, double d, double a, double alpha,
              Matrix& R, Vector& T) {
@@ -93,15 +93,15 @@ int main() {
   std::cout << R1 * v << std::endl;
   std::cout << R2 * v + R1 * dh1T << std::endl;
 
-// perform a collision query
+  // perform a collision query
 
   PQP_CollideResult cres;
   PQP_Collide(&cres, reinterpret_cast<PQP_REAL(*)[3]>(R1.data()), T1.data(), b1,
               reinterpret_cast<PQP_REAL(*)[3]>(R.data()), T.data(),
               obs, PQP_ALL_CONTACTS);
 
-// looking at the report, we can see where all the contacts were, and
-// also how many tests were necessary:
+  // looking at the report, we can see where all the contacts were, and
+  // also how many tests were necessary:
 
   printf("\nAll contact collision query between overlapping tori:\n");
   printf("Num BV tests: %d\n", cres.NumBVTests());
@@ -121,8 +121,8 @@ int main() {
               reinterpret_cast<PQP_REAL(*)[3]>(R.data()), T.data(),
               obs, PQP_ALL_CONTACTS);
 
-// looking at the report, we can see where all the contacts were, and
-// also how many tests were necessary:
+  // looking at the report, we can see where all the contacts were, and
+  // also how many tests were necessary:
 
   printf("\nAll contact collision query between overlapping tori:\n");
   printf("Num BV tests: %d\n", cres.NumBVTests());
@@ -138,13 +138,13 @@ int main() {
   }
 #endif
 
-// Notice the PQP_ALL_CONTACTS flag we used in the call to PQP_Collide.
-// The alternative is to use the PQP_FIRST_CONTACT flag, instead.
-// The result is that the collide routine searches for any contact,
-// but not all of them.  It can take many many fewer tests to locate a single
-// contact.
+  // Notice the PQP_ALL_CONTACTS flag we used in the call to PQP_Collide.
+  // The alternative is to use the PQP_FIRST_CONTACT flag, instead.
+  // The result is that the collide routine searches for any contact,
+  // but not all of them.  It can take many many fewer tests to locate a single
+  // contact.
 
-// Perform a distance query, which should return a distance of 0.0
+  // Perform a distance query, which should return a distance of 0.0
 
   PQP_DistanceResult dres;
   PQP_Distance(&dres, reinterpret_cast<PQP_REAL(*)[3]>(R2.data()), T2.data(),

@@ -22,9 +22,13 @@ public:
                  RandomSpaceGeneratorInterface* random_generator,
                  const int sample_space_size = 1000000);
 
-  int sample_space_size() { return sample_space_size_; }
-  double* GetPoint(int point_index) {
-    return conf_sample_space_->getPoint(point_index); }
+  int sample_space_size() { return conf_sample_space_->size(); }
+  int dimension() { return dimension_; }
+  double* GetPoint(int point_index) const {
+    return conf_sample_space_->getPoint(point_index);
+  }
+  // Adds a point and returns it's index
+  size_t AddPoint(EVectorXd& q);
   double CheckCollision(EVectorXd& q);
   // KnnQuery returns indexes
   std::vector<int> KnnQuery(EVectorXd& q, int k);
@@ -36,12 +40,14 @@ private:
   bool GenerateSampleSpace(
     RandomSpaceGeneratorInterface* random_generator,
     const int sample_space_size);
+  PQP_Model* ParseModel(const std::string& model_file);
 
   std::unique_ptr<PQP_Model> obstacles_;
   std::vector<std::unique_ptr<PQP_Model>> segments_;
   std::vector<DhParameter> dh_table_;
   FlannPointArray* conf_sample_space_;
   int sample_space_size_;
+  int dimension_;
 };
 
 #endif // PQP_ENVIRONMENT_H_INCLUDED
