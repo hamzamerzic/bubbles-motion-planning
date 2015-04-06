@@ -5,7 +5,7 @@
 #include <memory>
 
 #include <Eigen/Dense>
-#include "pqp_environment.h"
+#include "environment/pqp_environment.h"
 
 class PrmTree {
 public:

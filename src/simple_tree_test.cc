@@ -2,7 +2,7 @@
 #define BOOST_TEST_MODULE SimpleTreeTest
 
 #include "simple_tree.h"
-#include "pqp_environment.h"
+#include "environment/pqp_environment.h"
 #include "random_generator/naive_generator.h"
 
 #include <vector>

@@ -6,7 +6,7 @@
 #include <Eigen/Dense>
 
 #include "prm_tree.h"
-#include "pqp_environment.h"
+#include "environment/pqp_environment.h"
 
 struct Edge {
   Edge(size_t point_index, double distance): point_index(point_index),
