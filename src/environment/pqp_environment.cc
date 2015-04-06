@@ -17,20 +17,26 @@ PqpEnvironment::PqpEnvironment(const std::vector<std::string>&
                                obstacles_(new PQP_Model),
                                conf_sample_space_(nullptr),
                                sample_space_size_(sample_space_size) {
+  if(!LoadRobotParameters(dh_table_file)) throw "DH table problem!";
   if(!LoadRobotModel(robot_model_files)) throw "Robot model problem!";
-  if(!LoadDhTable(dh_table_file)) throw "DH table problem!";
   if(!LoadObstacles(obstacles_model_file)) throw "Obstacles problem!";
   if(!GenerateSampleSpace(random_generator, sample_space_size))
     throw "Sample space not generated!";
   dimension_ = segments_.size();
 }
 
-//TODO: Link number of segments
 bool PqpEnvironment::LoadRobotModel(
     const std::vector<std::string>& robot_model_files) {
+
   try {
-    for (const auto& model_file : robot_model_files)
-      segments_.emplace_back(ParseModel(model_file));
+    EMatrix R = EMatrix::Identity();
+    EVector3f T (0.0, 0.0, 0.0);
+
+    for (const auto& model_file : robot_model_files) {
+      if(segments_.size() >= 1)
+        dh_table_[segments_.size() - 1].InverseTransform(R, T);
+      segments_.emplace_back(ParseRobotModel(model_file, R, T));
+    }
 
     return true;
   }
@@ -40,7 +46,7 @@ bool PqpEnvironment::LoadRobotModel(
   return false; //Input file not present
 }
 
-bool PqpEnvironment::LoadDhTable(const std::string& dh_table_file) {
+bool PqpEnvironment::LoadRobotParameters(const std::string& dh_table_file) {
   std::ifstream input_file (dh_table_file.c_str());
   if (input_file) {
     try {
@@ -70,10 +76,11 @@ bool PqpEnvironment::LoadDhTable(const std::string& dh_table_file) {
   return false; //Input file not present
 }
 
-//Hopefully no modifications needed for general case
 bool PqpEnvironment::LoadObstacles(const std::string& obstacles_model_file) {
   try {
-    obstacles_ = std::unique_ptr<PQP_Model>(ParseModel(obstacles_model_file));
+    obstacles_ = std::unique_ptr<PQP_Model>(
+      ParseObstaclesModel(obstacles_model_file));
+
     return true;
   }
   catch (...) {
@@ -102,7 +109,51 @@ bool PqpEnvironment::GenerateSampleSpace(
   }
 }
 
-PQP_Model* PqpEnvironment::ParseModel(const std::string& model_file) {
+PQP_Model* PqpEnvironment::ParseRobotModel(const std::string& model_file,
+                                           const EMatrix& R,
+                                           const EVector3f& T) {
+  std::ifstream input_file (model_file.c_str(), std::ios::binary);
+  try {
+    std::unique_ptr<PQP_Model> model (new PQP_Model);
+
+    char header[80] = "";         // Reads STL binary header
+    input_file.read(header, 80);
+
+    unsigned num_tris (0);  // Reads number of triangles
+    input_file.read(reinterpret_cast<char*>(&num_tris), sizeof(num_tris));
+
+    EVector3f vertex[3];  // Triangle represented as three vertices
+    float surf_vec[3];
+
+    model->BeginModel();
+
+    short temp (0);  // Used for taking two bits of data after a triangle
+    unsigned long counter (0);
+    while(counter < num_tris) {
+      input_file.read(reinterpret_cast<char*>(surf_vec), sizeof(surf_vec));
+
+      input_file.read(reinterpret_cast<char*>(&vertex[0]), sizeof(vertex[0]));
+      input_file.read(reinterpret_cast<char*>(&vertex[1]), sizeof(vertex[1]));
+      input_file.read(reinterpret_cast<char*>(&vertex[2]), sizeof(vertex[2]));
+      vertex[0] = R * vertex[0] + T;
+      vertex[1] = R * vertex[1] + T;
+      vertex[2] = R * vertex[2] + T;
+      model->AddTri(vertex[0].data(), vertex[1].data(), vertex[2].data(), counter);
+
+      input_file.read(reinterpret_cast<char*>(&temp), sizeof(temp));
+      ++counter;
+    }
+
+    model->EndModel();
+    return model.release();
+  }
+  catch(...) {
+    throw "File " + model_file + " error!";
+  }
+}
+
+//TODO: Try to get rid of code repetition
+PQP_Model* PqpEnvironment::ParseObstaclesModel(const std::string& model_file) {
   std::ifstream input_file (model_file.c_str(), std::ios::binary);
   try {
     std::unique_ptr<PQP_Model> model (new PQP_Model);
@@ -146,14 +197,11 @@ size_t PqpEnvironment::AddPoint(EVectorXd& q) {
 }
 
 double PqpEnvironment::CheckCollision(EVectorXd& q) {
-  typedef Eigen::Matrix<float, 3, 3, Eigen::RowMajor> EMatrix;
-  typedef Eigen::Vector3f EVector;
-
   EMatrix R = EMatrix::Identity();
-  EVector T (0.0, 0.0, 0.0);
+  EVector3f T (0.0, 0.0, 0.0);
   // Static environment
   EMatrix R_obs = EMatrix::Identity();
-  EVector T_obs (0.0, 0.0, 0.0);
+  EVector3f T_obs (0.0, 0.0, 0.0);
 
   PQP_DistanceResult distance_res;
   double min_distance (INFINITY); // Initialized at infinity
