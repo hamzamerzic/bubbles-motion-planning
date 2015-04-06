@@ -33,6 +33,9 @@ public:
   // Applies DH transform to input matrices
   const void Transform(EMatrix& R, EVector& T) const;
 
+  // Used for placing a segment to origin
+  const void InverseTransform(EMatrix& R, EVector& T) const;
+
 private:
   EMatrix rotation_;
   EVector translation_;

@@ -25,3 +25,8 @@ const void DhParameter::Transform(EMatrix& R, EVector& T) const {
   T = R * translation_ + T;
   R = R * rotation_;
 }
+
+const void DhParameter::InverseTransform(EMatrix& R, EVector& T) const {
+  T = rotation_.transpose() * T - rotation_.transpose() * translation_;
+  R = rotation_.transpose() * R;
+}
