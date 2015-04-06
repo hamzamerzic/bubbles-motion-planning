@@ -8,6 +8,8 @@
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
 
+const double cylinder_radius = 1000.0;
+
 PqpEnvironment::PqpEnvironment(const std::vector<std::string>&
                                    robot_model_files,
                                const std::string& dh_table_file,
@@ -16,7 +18,8 @@ PqpEnvironment::PqpEnvironment(const std::vector<std::string>&
                                const int sample_space_size) :
                                obstacles_(new PQP_Model),
                                conf_sample_space_(nullptr),
-                               sample_space_size_(sample_space_size) {
+                               sample_space_size_(sample_space_size),
+                               cylinder_(ParseModel("cylinder.stl")) {
   if(!LoadRobotParameters(dh_table_file)) throw "DH table problem!";
   if(!LoadRobotModel(robot_model_files)) throw "Robot model problem!";
   if(!LoadObstacles(obstacles_model_file)) throw "Obstacles problem!";
@@ -46,8 +49,9 @@ bool PqpEnvironment::LoadRobotModel(
   return false; //Input file not present
 }
 
-bool PqpEnvironment::LoadRobotParameters(const std::string& dh_table_file) {
-  std::ifstream input_file (dh_table_file.c_str());
+// TODO: Add limits parsing
+bool PqpEnvironment::LoadRobotParameters(const std::string& parameters_file) {
+  std::ifstream input_file (parameters_file.c_str());
   if (input_file) {
     try {
       input_file.seekg(0, std::ios::end);            //End of file
@@ -79,7 +83,7 @@ bool PqpEnvironment::LoadRobotParameters(const std::string& dh_table_file) {
 bool PqpEnvironment::LoadObstacles(const std::string& obstacles_model_file) {
   try {
     obstacles_ = std::unique_ptr<PQP_Model>(
-      ParseObstaclesModel(obstacles_model_file));
+      ParseModel(obstacles_model_file));
 
     return true;
   }
@@ -109,10 +113,10 @@ bool PqpEnvironment::GenerateSampleSpace(
   }
 }
 
-PQP_Model* PqpEnvironment::ParseRobotModel(const std::string& model_file,
+PQP_Model* PqpEnvironment::ParseRobotModel(const std::string& robot_model_file,
                                            const EMatrix& R,
                                            const EVector3f& T) {
-  std::ifstream input_file (model_file.c_str(), std::ios::binary);
+  std::ifstream input_file (robot_model_file.c_str(), std::ios::binary);
   try {
     std::unique_ptr<PQP_Model> model (new PQP_Model);
 
@@ -148,12 +152,12 @@ PQP_Model* PqpEnvironment::ParseRobotModel(const std::string& model_file,
     return model.release();
   }
   catch(...) {
-    throw "File " + model_file + " error!";
+    throw "File " + robot_model_file + " error!";
   }
 }
 
-//TODO: Try to get rid of code repetition
-PQP_Model* PqpEnvironment::ParseObstaclesModel(const std::string& model_file) {
+// TODO: Try to get rid of code repetition
+PQP_Model* PqpEnvironment::ParseModel(const std::string& model_file) {
   std::ifstream input_file (model_file.c_str(), std::ios::binary);
   try {
     std::unique_ptr<PQP_Model> model (new PQP_Model);
@@ -199,22 +203,54 @@ size_t PqpEnvironment::AddPoint(EVectorXd& q) {
 double PqpEnvironment::CheckCollision(EVectorXd& q) {
   EMatrix R = EMatrix::Identity();
   EVector3f T (0.0, 0.0, 0.0);
-  // Static environment
-  EMatrix R_obs = EMatrix::Identity();
-  EVector3f T_obs (0.0, 0.0, 0.0);
+  // Static environment transform
+  EMatrix R_temp = EMatrix::Identity();
+  EVector3f T_temp (0.0, 0.0, 0.0);
 
   PQP_DistanceResult distance_res;
   double min_distance (INFINITY); // Initialized at infinity
-  for (size_t i (0); i < segments_.size(); ++i) {
+  std::vector<double> bubble_coordinates (dimension_, 0);
+  for (size_t i (0); i < dimension_; ++i) {
+
     R = R * Eigen::AngleAxisf(q[i], EVector::UnitZ());
     PQP_Distance(&distance_res, reinterpret_cast<PQP_REAL(*)[3]>(R.data()),
       T.data(), segments_.at(i).get(),
-      reinterpret_cast<PQP_REAL(*)[3]>(R_obs.data()), T_obs.data(),
+      reinterpret_cast<PQP_REAL(*)[3]>(R_temp.data()), T_temp.data(),
       obstacles_.get(), 0.0, 0.0);
 
     if (distance_res.Distance() < min_distance)
       min_distance = distance_res.Distance();
+
+    PQP_Distance(&distance_res, reinterpret_cast<PQP_REAL(*)[3]>(R.data()),
+      T.data(), segments_.at(i).get(),
+      reinterpret_cast<PQP_REAL(*)[3]>(R_temp.data()), T_temp.data(),
+      cylinder_.get(), 0.0, 0.0);
+    if (cylinder_radius - distance_res.Distance() > bubble_coordinates.at(0)) {
+      bubble_coordinates.at(0) = cylinder_radius - distance_res.Distance();
+    }
     dh_table_.at(i).Transform(R, T);
+  }
+
+  for (size_t i (1); i < dimension_; ++i) {
+    R_temp = R_temp * Eigen::AngleAxisf(q[i - 1], EVector::UnitZ());
+    dh_table_.at(i - 1).Transform(R_temp, T_temp);
+    R = R_temp;
+    T = T_temp;
+    for (size_t k (i); k < dimension_; ++k) {
+      R = R * Eigen::AngleAxisf(q[k], EVector::UnitZ());
+      PQP_Distance(&distance_res, reinterpret_cast<PQP_REAL(*)[3]>(R.data()),
+        T.data(), segments_.at(i).get(),
+        reinterpret_cast<PQP_REAL(*)[3]>(R_temp.data()), T_temp.data(),
+        cylinder_.get(), 0.0, 0.0);
+      if (cylinder_radius - distance_res.Distance() >
+        bubble_coordinates.at(i)) {
+        bubble_coordinates.at(i) = cylinder_radius - distance_res.Distance();
+      }
+      dh_table_.at(k).Transform(R, T);
+    }
+  }
+  for (size_t i (0); i < dimension_; ++i) {
+    printf("%lu: %lf\n", i, bubble_coordinates.at(i));
   }
   return min_distance;
 }

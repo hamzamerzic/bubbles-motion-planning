@@ -37,22 +37,22 @@ public:
 
 private:
   bool LoadRobotModel(const std::vector<std::string>& robot_mode_files);
-  bool LoadRobotParameters(const std::string& dh_table_file);
+  bool LoadRobotParameters(const std::string& parameters_file);
   bool LoadObstacles(const std::string& obstacles_model_file);
   bool GenerateSampleSpace(
     RandomSpaceGeneratorInterface* random_generator,
     const int sample_space_size);
-  PQP_Model* ParseRobotModel(const std::string& model_file,
+  PQP_Model* ParseRobotModel(const std::string& robot_model_file,
                              const EMatrix& R, const EVector3f& T);
-  PQP_Model* ParseObstaclesModel(const std::string& model_file);
+  PQP_Model* ParseModel(const std::string& model_file);
 
   std::unique_ptr<PQP_Model> obstacles_;
   std::vector<std::unique_ptr<PQP_Model>> segments_;
   std::vector<DhParameter> dh_table_;
-  std::unique_ptr<PQP_Model> cylinder_;
   FlannPointArray* conf_sample_space_;
   int sample_space_size_;
-  int dimension_;
+  size_t dimension_;
+  std::unique_ptr<PQP_Model> cylinder_;
 };
 
 #endif // PQP_ENVIRONMENT_H_INCLUDED
