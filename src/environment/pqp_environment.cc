@@ -240,7 +240,11 @@ double PqpEnvironment::CheckCollision(EVectorXd& q) {
       R = R * Eigen::AngleAxisf(q[k], EVector::UnitZ());
       PQP_Distance(&distance_res, reinterpret_cast<PQP_REAL(*)[3]>(R.data()),
 <<<<<<< HEAD
+<<<<<<< HEAD
         T.data(), segments_.at(k).get(),
+=======
+        T.data(), segments_.at(i).get(),
+>>>>>>> a1a70821ecf9d0fb045d4a0e11ab015cef2aa428
 =======
         T.data(), segments_.at(i).get(),
 >>>>>>> a1a70821ecf9d0fb045d4a0e11ab015cef2aa428
