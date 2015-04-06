@@ -239,15 +239,7 @@ double PqpEnvironment::CheckCollision(EVectorXd& q) {
     for (size_t k (i); k < dimension_; ++k) {
       R = R * Eigen::AngleAxisf(q[k], EVector::UnitZ());
       PQP_Distance(&distance_res, reinterpret_cast<PQP_REAL(*)[3]>(R.data()),
-<<<<<<< HEAD
-<<<<<<< HEAD
         T.data(), segments_.at(k).get(),
-=======
-        T.data(), segments_.at(i).get(),
->>>>>>> a1a70821ecf9d0fb045d4a0e11ab015cef2aa428
-=======
-        T.data(), segments_.at(i).get(),
->>>>>>> a1a70821ecf9d0fb045d4a0e11ab015cef2aa428
         reinterpret_cast<PQP_REAL(*)[3]>(R_temp.data()), T_temp.data(),
         cylinder_.get(), 0.0, 0.0);
       if (cylinder_radius - distance_res.Distance() >
