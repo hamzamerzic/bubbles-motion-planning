@@ -1,3 +1,19 @@
+/*
+ * Copyright (C) 2015 Hamza Merzić
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+*/
 #include "pqp_environment.h"
 
 #include <fstream>
@@ -15,11 +31,11 @@ PqpEnvironment::PqpEnvironment(const std::vector<std::string>&
                                const std::string& dh_table_file,
                                const std::string& obstacles_model_file,
                                RandomSpaceGeneratorInterface *random_generator,
-                               const int sample_space_size) :
-                               obstacles_(new PQP_Model),
-                               conf_sample_space_(nullptr),
-                               sample_space_size_(sample_space_size),
-                               cylinder_(ParseModel("cylinder.stl")) {
+                               const int sample_space_size):
+                               obstacles_ (new PQP_Model),
+                               conf_sample_space_ (nullptr),
+                               sample_space_size_ (sample_space_size),
+                               cylinder_ (ParseModel("cylinder.stl")) {
   if(!LoadRobotParameters(dh_table_file)) throw "DH table problem!";
   if(!LoadRobotModel(robot_model_files)) throw "Robot model problem!";
   if(!LoadObstacles(obstacles_model_file)) throw "Obstacles problem!";
@@ -30,7 +46,6 @@ PqpEnvironment::PqpEnvironment(const std::vector<std::string>&
 
 bool PqpEnvironment::LoadRobotModel(
     const std::vector<std::string>& robot_model_files) {
-
   try {
     EMatrix R = EMatrix::Identity();
     EVector3f T (0.0, 0.0, 0.0);
@@ -200,6 +215,7 @@ size_t PqpEnvironment::AddPoint(EVectorXd& q) {
   return conf_sample_space_->size() - 1;
 }
 
+// TODO: Update to create bubble and make it faster and cleaner
 double PqpEnvironment::CheckCollision(EVectorXd& q) {
   EMatrix R = EMatrix::Identity();
   EVector3f T (0.0, 0.0, 0.0);
@@ -210,8 +226,8 @@ double PqpEnvironment::CheckCollision(EVectorXd& q) {
   PQP_DistanceResult distance_res;
   double min_distance (INFINITY); // Initialized at infinity
   std::vector<double> bubble_coordinates (dimension_, 0);
-  for (size_t i (0); i < dimension_; ++i) {
 
+  for (size_t i (0); i < dimension_; ++i) {
     R = R * Eigen::AngleAxisf(q[i], EVector::UnitZ());
     PQP_Distance(&distance_res, reinterpret_cast<PQP_REAL(*)[3]>(R.data()),
       T.data(), segments_.at(i).get(),
@@ -225,6 +241,7 @@ double PqpEnvironment::CheckCollision(EVectorXd& q) {
       T.data(), segments_.at(i).get(),
       reinterpret_cast<PQP_REAL(*)[3]>(R_temp.data()), T_temp.data(),
       cylinder_.get(), 0.0, 0.0);
+
     if (cylinder_radius - distance_res.Distance() > bubble_coordinates.at(0)) {
       bubble_coordinates.at(0) = cylinder_radius - distance_res.Distance();
     }
@@ -242,6 +259,7 @@ double PqpEnvironment::CheckCollision(EVectorXd& q) {
         T.data(), segments_.at(k).get(),
         reinterpret_cast<PQP_REAL(*)[3]>(R_temp.data()), T_temp.data(),
         cylinder_.get(), 0.0, 0.0);
+
       if (cylinder_radius - distance_res.Distance() >
         bubble_coordinates.at(i)) {
         bubble_coordinates.at(i) = cylinder_radius - distance_res.Distance();
@@ -249,9 +267,7 @@ double PqpEnvironment::CheckCollision(EVectorXd& q) {
       dh_table_.at(k).Transform(R, T);
     }
   }
-  for (size_t i (0); i < dimension_; ++i) {
-    printf("%lu: %lf\n", i, bubble_coordinates.at(i));
-  }
+
   return min_distance;
 }
 
