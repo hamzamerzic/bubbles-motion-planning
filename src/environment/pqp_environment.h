@@ -27,6 +27,7 @@
 
 #include "dh_parameter.h"
 #include "random_generator/random_space_generator_interface.h"
+#include "model_parser.h"
 
 class PqpEnvironment {
   typedef flann::Index<flann::L2<double>> FlannPointArray;
@@ -58,13 +59,11 @@ private:
   bool GenerateSampleSpace(
     RandomSpaceGeneratorInterface* random_generator,
     const int sample_space_size);
-  PQP_Model* ParseRobotModel(const std::string& robot_model_file,
-                             const EMatrix& R, const EVector3f& T);
-  PQP_Model* ParseModel(const std::string& model_file);
 
   std::unique_ptr<PQP_Model> obstacles_;
   std::vector<std::unique_ptr<PQP_Model>> segments_;
   std::vector<DhParameter> dh_table_;
+  ModelParser parser_;
   FlannPointArray* conf_sample_space_;
   int sample_space_size_;
   size_t dimension_;

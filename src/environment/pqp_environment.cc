@@ -25,6 +25,7 @@
 #include <Eigen/Geometry>
 
 const double cylinder_radius = 1000.0;
+const double min_distance_overhead = 0.01; // Smallest distance to obstacles
 
 PqpEnvironment::PqpEnvironment(const std::vector<std::string>&
                                    robot_model_files,
@@ -35,7 +36,7 @@ PqpEnvironment::PqpEnvironment(const std::vector<std::string>&
                                obstacles_ (new PQP_Model),
                                conf_sample_space_ (nullptr),
                                sample_space_size_ (sample_space_size),
-                               cylinder_ (ParseModel("cylinder.stl")) {
+                               cylinder_ (parser_.GetModel("cylinder.stl")) {
   if(!LoadRobotParameters(dh_table_file)) throw "DH table problem!";
   if(!LoadRobotModel(robot_model_files)) throw "Robot model problem!";
   if(!LoadObstacles(obstacles_model_file)) throw "Obstacles problem!";
@@ -53,7 +54,7 @@ bool PqpEnvironment::LoadRobotModel(
     for (const auto& model_file : robot_model_files) {
       if(segments_.size() >= 1)
         dh_table_[segments_.size() - 1].InverseTransform(R, T);
-      segments_.emplace_back(ParseRobotModel(model_file, R, T));
+      segments_.emplace_back(parser_.GetTransformModel(model_file, R, T));
     }
 
     return true;
@@ -98,7 +99,7 @@ bool PqpEnvironment::LoadRobotParameters(const std::string& parameters_file) {
 bool PqpEnvironment::LoadObstacles(const std::string& obstacles_model_file) {
   try {
     obstacles_ = std::unique_ptr<PQP_Model>(
-      ParseModel(obstacles_model_file));
+      parser_.GetModel(obstacles_model_file));
 
     return true;
   }
@@ -128,88 +129,6 @@ bool PqpEnvironment::GenerateSampleSpace(
   }
 }
 
-PQP_Model* PqpEnvironment::ParseRobotModel(const std::string& robot_model_file,
-                                           const EMatrix& R,
-                                           const EVector3f& T) {
-  std::ifstream input_file (robot_model_file.c_str(), std::ios::binary);
-  try {
-    std::unique_ptr<PQP_Model> model (new PQP_Model);
-
-    char header[80] = "";         // Reads STL binary header
-    input_file.read(header, 80);
-
-    unsigned num_tris (0);  // Reads number of triangles
-    input_file.read(reinterpret_cast<char*>(&num_tris), sizeof(num_tris));
-
-    EVector3f vertex[3];  // Triangle represented as three vertices
-    float surf_vec[3];
-
-    model->BeginModel();
-
-    short temp (0);  // Used for taking two bits of data after a triangle
-    unsigned long counter (0);
-    while(counter < num_tris) {
-      input_file.read(reinterpret_cast<char*>(surf_vec), sizeof(surf_vec));
-
-      input_file.read(reinterpret_cast<char*>(&vertex[0]), sizeof(vertex[0]));
-      input_file.read(reinterpret_cast<char*>(&vertex[1]), sizeof(vertex[1]));
-      input_file.read(reinterpret_cast<char*>(&vertex[2]), sizeof(vertex[2]));
-      vertex[0] = R * vertex[0] + T;
-      vertex[1] = R * vertex[1] + T;
-      vertex[2] = R * vertex[2] + T;
-      model->AddTri(vertex[0].data(), vertex[1].data(), vertex[2].data(), counter);
-
-      input_file.read(reinterpret_cast<char*>(&temp), sizeof(temp));
-      ++counter;
-    }
-
-    model->EndModel();
-    return model.release();
-  }
-  catch(...) {
-    throw "File " + robot_model_file + " error!";
-  }
-}
-
-// TODO: Try to get rid of code repetition
-PQP_Model* PqpEnvironment::ParseModel(const std::string& model_file) {
-  std::ifstream input_file (model_file.c_str(), std::ios::binary);
-  try {
-    std::unique_ptr<PQP_Model> model (new PQP_Model);
-
-    char header[80] = "";         // Reads STL binary header
-    input_file.read(header, 80);
-
-    unsigned num_tris (0);  // Reads number of triangles
-    input_file.read(reinterpret_cast<char*>(&num_tris), sizeof(num_tris));
-
-    float vertex[3][3];  // Triangle represented as three vertices
-    float surf_vec[3];
-
-    model->BeginModel();
-
-    short temp (0);  // Used for taking two bits of data after a triangle
-    unsigned long counter (0);
-    while(counter < num_tris) {
-      input_file.read(reinterpret_cast<char*>(surf_vec), sizeof(surf_vec));
-
-      input_file.read(reinterpret_cast<char*>(&vertex[0]), sizeof(vertex[0]));
-      input_file.read(reinterpret_cast<char*>(&vertex[1]), sizeof(vertex[1]));
-      input_file.read(reinterpret_cast<char*>(&vertex[2]), sizeof(vertex[2]));
-      model->AddTri(vertex[0], vertex[1], vertex[2], counter);
-
-      input_file.read(reinterpret_cast<char*>(&temp), sizeof(temp));
-      ++counter;
-    }
-
-    model->EndModel();
-    return model.release();
-  }
-  catch(...) {
-    throw "File " + model_file + " error!";
-  }
-}
-
 size_t PqpEnvironment::AddPoint(EVectorXd& q) {
   conf_sample_space_->addPoints(flann::Matrix<double> (q.data(), 1, q.size()));
   return conf_sample_space_->size() - 1;
@@ -234,6 +153,8 @@ double PqpEnvironment::CheckCollision(EVectorXd& q) {
       reinterpret_cast<PQP_REAL(*)[3]>(R_temp.data()), T_temp.data(),
       obstacles_.get(), 0.0, 0.0);
 
+    if (distance_res.Distance() < min_distance_overhead)
+      return 0; // Too close to obstacle, return 0
     if (distance_res.Distance() < min_distance)
       min_distance = distance_res.Distance();
 
