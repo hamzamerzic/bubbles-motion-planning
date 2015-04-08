@@ -134,7 +134,6 @@ size_t PqpEnvironment::AddPoint(EVectorXd& q) {
   return conf_sample_space_->size() - 1;
 }
 
-// TODO: Update to create bubble and make it faster and cleaner
 double PqpEnvironment::CheckCollision(EVectorXd& q) {
   EMatrix R = EMatrix::Identity();
   EVector3f T (0.0, 0.0, 0.0);
@@ -144,7 +143,6 @@ double PqpEnvironment::CheckCollision(EVectorXd& q) {
 
   PQP_DistanceResult distance_res;
   double min_distance (INFINITY); // Initialized at infinity
-  std::vector<double> bubble_coordinates (dimension_, 0);
 
   for (size_t i (0); i < dimension_; ++i) {
     R = R * Eigen::AngleAxisf(q[i], EVector::UnitZ());
@@ -158,16 +156,49 @@ double PqpEnvironment::CheckCollision(EVectorXd& q) {
     if (distance_res.Distance() < min_distance)
       min_distance = distance_res.Distance();
 
+    dh_table_.at(i).Transform(R, T);
+  }
+
+  return min_distance;
+}
+
+bool PqpEnvironment::MakeBubble(EVectorXd& q, Bubble& bubble) {
+  EMatrix R = EMatrix::Identity();
+  EVector3f T (0.0, 0.0, 0.0);
+  // Static environment transform
+  EMatrix R_temp = EMatrix::Identity();
+  EVector3f T_temp (0.0, 0.0, 0.0);
+
+  PQP_DistanceResult distance_res;
+  bubble.Resize(dimension_);
+  bubble.distance() = INFINITY;
+
+  double max_axis_distance (0);
+
+  for (size_t i (0); i < dimension_; ++i) {
+    R = R * Eigen::AngleAxisf(q[i], EVector::UnitZ());
+    PQP_Distance(&distance_res, reinterpret_cast<PQP_REAL(*)[3]>(R.data()),
+      T.data(), segments_.at(i).get(),
+      reinterpret_cast<PQP_REAL(*)[3]>(R_temp.data()), T_temp.data(),
+      obstacles_.get(), 0.0, 0.0);
+
+    if (distance_res.Distance() < min_distance_overhead)
+      return false; // Too close to obstacle
+    if (distance_res.Distance() < bubble.distance())
+      bubble.distance() = distance_res.Distance();
+
     PQP_Distance(&distance_res, reinterpret_cast<PQP_REAL(*)[3]>(R.data()),
       T.data(), segments_.at(i).get(),
       reinterpret_cast<PQP_REAL(*)[3]>(R_temp.data()), T_temp.data(),
       cylinder_.get(), 0.0, 0.0);
 
-    if (cylinder_radius - distance_res.Distance() > bubble_coordinates.at(0)) {
-      bubble_coordinates.at(0) = cylinder_radius - distance_res.Distance();
+    max_axis_distance = cylinder_radius - distance_res.Distance();
+    if (max_axis_distance / bubble.distance() > bubble.Get(0)) {
+      bubble.Set(0, max_axis_distance / bubble.distance());
     }
     dh_table_.at(i).Transform(R, T);
   }
+
 
   for (size_t i (1); i < dimension_; ++i) {
     R_temp = R_temp * Eigen::AngleAxisf(q[i - 1], EVector::UnitZ());
@@ -181,15 +212,15 @@ double PqpEnvironment::CheckCollision(EVectorXd& q) {
         reinterpret_cast<PQP_REAL(*)[3]>(R_temp.data()), T_temp.data(),
         cylinder_.get(), 0.0, 0.0);
 
-      if (cylinder_radius - distance_res.Distance() >
-        bubble_coordinates.at(i)) {
-        bubble_coordinates.at(i) = cylinder_radius - distance_res.Distance();
-      }
+    max_axis_distance = cylinder_radius - distance_res.Distance();
+    if (max_axis_distance / bubble.distance() > bubble.Get(i)) {
+      bubble.Set(i, max_axis_distance / bubble.distance());
+    }
       dh_table_.at(k).Transform(R, T);
     }
   }
 
-  return min_distance;
+  return true;
 }
 
 std::vector<int> PqpEnvironment::KnnQuery(EVectorXd& q, int k) {

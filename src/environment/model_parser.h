@@ -25,13 +25,13 @@
 class ModelParser {
   typedef Eigen::Matrix<float, 3, 3, Eigen::RowMajor> EMatrix;
   typedef Eigen::Vector3f EVector3f;
+
 public:
   ModelParser() {}
   PQP_Model* GetTransformModel(const std::string& robot_model_file,
                              const EMatrix& R, const EVector3f& T);
   PQP_Model* GetModel(const std::string& model_file);
   // TODO: Add robot parameters getter
-
 };
 
 #endif // MODEL_PARSER_H_INCLUDED

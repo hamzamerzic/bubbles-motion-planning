@@ -24,6 +24,7 @@
 #include <PQP/PQP.h>
 #include <Eigen/Dense>
 #include <flann/flann.hpp>
+#include "../bubble.h"
 
 #include "dh_parameter.h"
 #include "random_generator/random_space_generator_interface.h"
@@ -34,6 +35,7 @@ class PqpEnvironment {
   typedef Eigen::VectorXd EVectorXd;
   typedef Eigen::Matrix<float, 3, 3, Eigen::RowMajor> EMatrix;
   typedef Eigen::Vector3f EVector3f;
+
 public:
   PqpEnvironment(const std::vector<std::string>& robot_model_files,
                  const std::string& dh_table_file,
@@ -48,8 +50,11 @@ public:
   }
   // Adds a point and returns it's index
   size_t AddPoint(EVectorXd& q);
+  // Returns distance
   double CheckCollision(EVectorXd& q);
-  // KnnQuery returns indexes
+  // Creates bubble and returns false if unable
+  bool MakeBubble(EVectorXd& q, Bubble& bubble);
+  // KnnQuery returns indices
   std::vector<int> KnnQuery(EVectorXd& q, int k);
 
 private:
