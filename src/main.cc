@@ -22,7 +22,7 @@
 
 #define LISTS 1
 
-const double seg_width = 0.0001;
+const float seg_width = 0.0001;
 typedef Eigen::Matrix<float, 3, 3, Eigen::RowMajor> Matrix;
 typedef Eigen::Vector3f Vector;
 
