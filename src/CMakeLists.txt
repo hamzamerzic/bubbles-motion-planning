@@ -1,8 +1,8 @@
 include_directories(.)
 
 add_subdirectory(PQP)
-add_subdirectory(debugging)
 add_subdirectory(environment)
+add_subdirectory(models)
 add_subdirectory(random_generator)
 
 add_library(dh_parameter dh_parameter.cc)
@@ -16,6 +16,8 @@ target_link_libraries(simple_tree
 add_executable(main main.cc)
 target_link_libraries(main
                       PQP)
+
+configure_file(cylinder.stl cylinder.stl COPYONLY)
 
 #Tests
 add_executable(dh_parameter_test dh_parameter_test.cc)
