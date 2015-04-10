@@ -20,6 +20,7 @@
 #include <sstream>
 #include <string>
 #include <algorithm>
+#include <cstdio>
 
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
@@ -35,18 +36,24 @@ PqpEnvironment::PqpEnvironment(const std::vector<std::string>&
                                const int sample_space_size):
                                obstacles_ (new PQP_Model),
                                conf_sample_space_ (nullptr),
-                               sample_space_size_ (sample_space_size),
-                               cylinder_ (parser_.GetModel("cylinder.stl")) {
+                               sample_space_size_ (sample_space_size) {
   if(!LoadRobotParameters(dh_table_file)) throw "DH table problem!";
   if(!LoadRobotModel(robot_model_files)) throw "Robot model problem!";
   if(!LoadObstacles(obstacles_model_file)) throw "Obstacles problem!";
   if(!GenerateSampleSpace(random_generator, sample_space_size))
     throw "Sample space not generated!";
   dimension_ = segments_.size();
+  try {
+    cylinder_ = std::unique_ptr<PQP_Model>(parser_.GetModel("cylinder.stl"));
+  } catch(std::string& s) {
+    printf("%s\n", s.c_str());
+    throw s;
+  }
 }
 
 bool PqpEnvironment::LoadRobotModel(
     const std::vector<std::string>& robot_model_files) {
+  printf("Loading robot model... ");
   try {
     EMatrix R = EMatrix::Identity();
     EVector3f T (0.0, 0.0, 0.0);
@@ -57,6 +64,7 @@ bool PqpEnvironment::LoadRobotModel(
       segments_.emplace_back(parser_.GetTransformModel(model_file, R, T));
     }
 
+    printf("Robot model successfully loaded!\n");
     return true;
   }
   catch (...) {
@@ -68,6 +76,7 @@ bool PqpEnvironment::LoadRobotModel(
 // TODO: Add limits parsing
 bool PqpEnvironment::LoadRobotParameters(const std::string& parameters_file) {
   std::ifstream input_file (parameters_file.c_str());
+  printf("Loading robot parameters... ");
   if (input_file) {
     try {
       input_file.seekg(0, std::ios::end);            //End of file
@@ -87,6 +96,8 @@ bool PqpEnvironment::LoadRobotParameters(const std::string& parameters_file) {
         parser >> theta >> d >> a >> alpha;
         dh_table_.emplace_back(theta, d, a, alpha);
       }
+
+      printf("Robot parameters successfully loaded!\n");
       return true;
     }
     catch(...) {
@@ -97,10 +108,12 @@ bool PqpEnvironment::LoadRobotParameters(const std::string& parameters_file) {
 }
 
 bool PqpEnvironment::LoadObstacles(const std::string& obstacles_model_file) {
+  printf("Loading obstacles model... ");
   try {
     obstacles_ = std::unique_ptr<PQP_Model>(
       parser_.GetModel(obstacles_model_file));
 
+    printf("Obstacles model successfully loaded!\n");
     return true;
   }
   catch (...) {
@@ -112,6 +125,7 @@ bool PqpEnvironment::LoadObstacles(const std::string& obstacles_model_file) {
 bool PqpEnvironment::GenerateSampleSpace(
     RandomSpaceGeneratorInterface* random_generator,
     const int sample_space_size) {
+  printf("Generating sample space... ");
   try {
     // Initialize points_array from sample space generator
     std::unique_ptr<double[]> points_array (
@@ -123,6 +137,7 @@ bool PqpEnvironment::GenerateSampleSpace(
       static_cast<int>(segments_.size())), flann::KDTreeIndexParams(4));
     conf_sample_space_->buildIndex();
 
+    printf("Sample space successfully generated!\n");
     return true;
   } catch (...) {
     return false;

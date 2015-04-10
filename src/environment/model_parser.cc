@@ -23,10 +23,10 @@
 #include <PQP/PQP.h>
 #include <Eigen/Dense>
 
-PQP_Model* ModelParser::GetTransformModel(const std::string& robot_model_file,
+PQP_Model* ModelParser::GetTransformModel(const std::string& model_file,
                                            const EMatrix& R,
                                            const EVector3f& T) {
-  std::ifstream input_file (robot_model_file.c_str(), std::ios::binary);
+  std::ifstream input_file (model_file.c_str(), std::ios::binary);
   try {
     std::unique_ptr<PQP_Model> model (new PQP_Model);
 
@@ -52,7 +52,8 @@ PQP_Model* ModelParser::GetTransformModel(const std::string& robot_model_file,
       vertex[0] = R * vertex[0] + T;
       vertex[1] = R * vertex[1] + T;
       vertex[2] = R * vertex[2] + T;
-      model->AddTri(vertex[0].data(), vertex[1].data(), vertex[2].data(), counter);
+      model->AddTri(vertex[0].data(), vertex[1].data(), vertex[2].data(),
+        counter);
 
       input_file.read(reinterpret_cast<char*>(&temp), sizeof(temp));
       ++counter;
@@ -62,7 +63,7 @@ PQP_Model* ModelParser::GetTransformModel(const std::string& robot_model_file,
     return model.release();
   }
   catch(...) {
-    throw "File " + robot_model_file + " error!";
+    throw "File " + model_file + " error!";
   }
 }
 

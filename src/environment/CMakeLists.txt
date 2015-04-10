@@ -10,6 +10,8 @@ add_library(model_parser model_parser.cc)
 target_link_libraries(model_parser
                       PQP)
 
+configure_file(cylinder.stl cylinder.stl COPYONLY)
+
 #Tests
 add_executable(pqp_environment_test pqp_environment_test.cc)
 target_link_libraries(pqp_environment_test

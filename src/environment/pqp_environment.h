@@ -50,11 +50,11 @@ public:
   }
   // Adds a point and returns it's index
   size_t AddPoint(EVectorXd& q);
-  // Returns distance
+  // Collision query - returns distance
   double CheckCollision(EVectorXd& q);
-  // Creates bubble and returns false if unable
+  // Creates bubble - returns false if unable
   bool MakeBubble(EVectorXd& q, Bubble& bubble);
-  // KnnQuery returns indices
+  // Knn query - returns indices
   std::vector<int> KnnQuery(EVectorXd& q, int k);
 
 private:
@@ -72,6 +72,7 @@ private:
   FlannPointArray* conf_sample_space_;
   int sample_space_size_;
   size_t dimension_;
+  // Cylinder needed for generating bubbles
   std::unique_ptr<PQP_Model> cylinder_;
 };
 
