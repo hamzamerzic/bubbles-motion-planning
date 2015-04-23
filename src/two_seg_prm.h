@@ -39,29 +39,24 @@ struct EdgeCompareFunctor {
 
 class TwoSegPrm : PrmTree {
 public:
+  typedef Eigen::VectorXd EVectorXd;
   TwoSegPrm(PqpEnvironment* pqp_environment, EVectorXd& start, EVectorXd& end,
       double step_size, double collision_limit = 0.01):
       PrmTree (pqp_environment, start, end),
       parents_ (std::vector<int>(space_size_, -1)),
       step_size_ (step_size), collision_limit_ (collision_limit) {}
 
+  virtual bool ConnectPoints(int point1_index, int point2_index);
   virtual bool AddPointToTree(int point_index);
   virtual bool BuildTree();
-  virtual bool ConnectPoints(int point1_index, int point2_index);
   virtual void LogResults();
-  EVectorXd GetPoint(int point_index) {
-    return EVectorXd::Map(pqp_environment_->GetPoint(point_index),
-      pqp_environment_->dimension());
-  }
-  int InsertPoint(EVectorXd& point) {
-    parents_.push_back(-1); ++space_size_; visited_.push_back(false);
-    return pqp_environment_->AddPoint(point);
-  }
+
+  EVectorXd GetPoint(int point_index);
+  int InsertPoint(EVectorXd& point);
 
 private:
   std::vector<int> parents_;
-  double step_size_;
-  double collision_limit_;
+  double step_size_, collision_limit_;
   std::priority_queue<Edge, std::vector<Edge>, EdgeCompareFunctor> pq_;
 };
 

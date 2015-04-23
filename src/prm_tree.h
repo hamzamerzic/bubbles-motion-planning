@@ -33,9 +33,9 @@ public:
     space_size_ (pqp_environment->sample_space_size() + 2),
     visited_ (std::vector<bool>(space_size_, false)) {}
 
+  virtual bool ConnectPoints(int point1_index, int point2_index) = 0;
   virtual bool AddPointToTree(int point_index) = 0;
   virtual bool BuildTree() = 0;
-  virtual bool ConnectPoints(int point1_index, int point2_index) = 0;
   virtual void LogResults() = 0;
 
 protected:
