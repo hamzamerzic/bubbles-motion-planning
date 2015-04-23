@@ -14,8 +14,8 @@
  * limitations under the License.
  *
 */
-#ifndef SIMPLE_TREE_H_INCLUDED
-#define SIMPLE_TREE_H_INCLUDED
+#ifndef TWO_SEG_PRM_H_INCLUDED
+#define TWO_SEG_PRM_H_INCLUDED
 
 #include <vector>
 #include <queue>
@@ -25,9 +25,9 @@
 #include "environment/pqp_environment.h"
 
 struct Edge {
-  Edge(size_t point_index, double distance): point_index (point_index),
+  Edge(int point_index, double distance): point_index (point_index),
                                              distance (distance) {}
-  size_t point_index;
+  int point_index;
   double distance;
 };
 
@@ -37,17 +37,26 @@ struct EdgeCompareFunctor {
   }
 };
 
-class SimpleTree : PrmTree {
+class TwoSegPrm : PrmTree {
 public:
-  SimpleTree(PqpEnvironment* pqp_environment, EVectorXd& start, EVectorXd& end,
-      double step_size,double collision_limit = 0.01):
+  TwoSegPrm(PqpEnvironment* pqp_environment, EVectorXd& start, EVectorXd& end,
+      double step_size, double collision_limit = 0.01):
       PrmTree (pqp_environment, start, end),
       parents_ (std::vector<int>(space_size_, -1)),
       step_size_ (step_size), collision_limit_ (collision_limit) {}
 
-  virtual bool TryConnect(EVectorXd& point1, EVectorXd& point2);
-  virtual bool AddPoint(int point_index);
+  virtual bool AddPointToTree(int point_index);
   virtual bool BuildTree();
+  virtual bool ConnectPoints(int point1_index, int point2_index);
+  virtual void LogResults();
+  EVectorXd GetPoint(int point_index) {
+    return EVectorXd::Map(pqp_environment_->GetPoint(point_index),
+      pqp_environment_->dimension());
+  }
+  int InsertPoint(EVectorXd& point) {
+    parents_.push_back(-1); ++space_size_; visited_.push_back(false);
+    return pqp_environment_->AddPoint(point);
+  }
 
 private:
   std::vector<int> parents_;
@@ -56,4 +65,4 @@ private:
   std::priority_queue<Edge, std::vector<Edge>, EdgeCompareFunctor> pq_;
 };
 
-#endif // SIMPLE_TREE_H_INCLUDED
+#endif // TWO_SEG_PRM_H_INCLUDED

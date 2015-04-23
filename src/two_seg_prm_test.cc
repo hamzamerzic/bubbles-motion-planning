@@ -17,11 +17,12 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE SimpleTreeTest
 
-#include "simple_tree.h"
+#include "two_seg_prm.h"
 
 #include <vector>
 #include <memory>
 #include <cmath>
+#include <iostream>
 
 #include "environment/pqp_environment.h"
 #include "random_generator/naive_generator.h"
@@ -29,7 +30,7 @@
 
 typedef Eigen::VectorXd EVectorXd;
 
-BOOST_AUTO_TEST_CASE(try_connect) {
+BOOST_AUTO_TEST_CASE(connect) {
   std::vector<std::pair<double, double>> limits;
   limits.emplace_back(0, 2 * M_PI);
   limits.emplace_back(0, 2 * M_PI);
@@ -42,13 +43,15 @@ BOOST_AUTO_TEST_CASE(try_connect) {
 
   EVectorXd start (2); start << 0, 0;
   EVectorXd end (2); end << 1, 1;
-  SimpleTree simple_tree (pqp, start, end, 0.01);
+  TwoSegPrm two_seg_prm (pqp, start, end, 0.01);
   EVectorXd qbegin (2); qbegin << 0, 0;
   EVectorXd qend (2); qend << 1, 1;
-  BOOST_CHECK_EQUAL(simple_tree.TryConnect(qbegin, qend), true);
+  int qbegin_ind (two_seg_prm.InsertPoint(qbegin)),
+    qend_ind (two_seg_prm.InsertPoint(qend));
+  BOOST_CHECK_EQUAL(two_seg_prm.ConnectPoints(qbegin_ind, qend_ind), true);
 }
 
-BOOST_AUTO_TEST_CASE(try_connect1) {
+BOOST_AUTO_TEST_CASE(connect1) {
   std::vector<std::pair<double, double>> limits;
   limits.emplace_back(0, 2 * M_PI);
   limits.emplace_back(0, 2 * M_PI);
@@ -57,13 +60,16 @@ BOOST_AUTO_TEST_CASE(try_connect1) {
   PqpEnvironment* pqp (new PqpEnvironment(
       {"models/robot1_seg1.stl", "models/robot1_seg2.stl"},
       "models/dh_table_test.txt","models/obstacles_test.stl",
-      generator.get()));
+      generator.get(), 1000));
 
   EVectorXd start (2); start << 0, 0;
   EVectorXd end (2); end << 1, 1;
-  SimpleTree simple_tree (pqp, start, end, 0.01);
+  TwoSegPrm two_seg_prm (pqp, start, end, 0.01);
   EVectorXd qbegin (2); qbegin << M_PI_2 - 0.1, M_PI_2 - 0.1;
   EVectorXd qend (2); qend << M_PI_2 + 0.1, M_PI_2 + 0.1;
-  BOOST_CHECK_EQUAL(simple_tree.TryConnect(qbegin, qend), false);
-  BOOST_CHECK_EQUAL(simple_tree.BuildTree(), true);
+  int qbegin_ind (two_seg_prm.InsertPoint(qbegin)),
+    qend_ind (two_seg_prm.InsertPoint(qend));
+  BOOST_CHECK_EQUAL(two_seg_prm.ConnectPoints(qbegin_ind, qend_ind), false);
+  BOOST_CHECK_EQUAL(two_seg_prm.BuildTree(), true);
+  two_seg_prm.LogResults();
 }
