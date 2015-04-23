@@ -23,12 +23,14 @@
 
 #include "prm_tree.h"
 #include "environment/pqp_environment.h"
+#include "bubble.h"
 
 struct Edge {
-  Edge(std::shared_ptr<Bubble>& b1, std::shared_ptr<Bubble>& b2,
-      double weight): b1 (b1), b2 (b2), weight (weight);
+  Edge(int point1_index, int point2_index, double weight):
+      point1_index (point1_index), point2_index (point2_index),
+      weight (weight) {};
 
-  std::shared_ptr<Bubble> b1, b2;
+  int point1_index, point2_index;
   double weight;
 };
 
@@ -40,21 +42,25 @@ struct EdgeCompareFunctor {
 
 class BubblePrm : PrmTree {
 public:
+  typedef Eigen::VectorXd EVectorXd;
   BubblePrm(PqpEnvironment* pqp_environment, EVectorXd& start, EVectorXd& end,
       double step_size, double collision_limit = 0.01):
       PrmTree (pqp_environment, start, end),
       step_size_ (step_size), collision_limit_ (collision_limit) {}
 
-  virtual bool AddPoint(int point_index);
+  virtual bool ConnectPoints(int point1_index, int point2_index);
+  virtual bool AddPointToTree(int point_index);
   virtual bool BuildTree();
-  bool Connect(Bubble& b1, Bubble& b2);
+  virtual void LogResults();
+  EVectorXd GetCoordinates(int point_index) const;
 
 private:
   EVectorXd HullIntersection(const Bubble& b1, const Bubble& b2) const;
 
-  double step_size_;
-  double collision_limit_;
+  std::vector<Bubble*> bubbles_;
+  double step_size_, collision_limit_;
   std::priority_queue<Edge, std::vector<Edge>, EdgeCompareFunctor> pq_;
+
 };
 
 #endif // BUBBLE_PRM_H_INCLUDED

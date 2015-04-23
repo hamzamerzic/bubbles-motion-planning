@@ -13,6 +13,10 @@ add_library(two_seg_prm two_seg_prm.cc)
 target_link_libraries(two_seg_prm
                       pqp_environment)
 
+add_library(bubble_prm bubble_prm.cc)
+target_link_libraries(bubble_prm
+                      pqp_environment)
+
 add_executable(main main.cc)
 target_link_libraries(main
                       PQP)
@@ -33,3 +37,11 @@ target_link_libraries(two_seg_prm_test
                       naive_generator
                       boost_unit_test_framework)
 add_test(SIMPLE_TREE_TEST ${CMAKE_CURRENT_BINARY_DIR}/two_seg_prm_test)
+
+add_executable(bubble_prm_test bubble_prm_test.cc)
+target_link_libraries(bubble_prm_test
+                      bubble_prm
+                      pqp_environment
+                      naive_generator
+                      boost_unit_test_framework)
+add_test(SIMPLE_TREE_TEST ${CMAKE_CURRENT_BINARY_DIR}/bubble_prm_test)

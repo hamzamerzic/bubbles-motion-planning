@@ -15,22 +15,26 @@
  *
 */
 #include "bubble_prm.h"
+#include <cmath>
 
-bool BubblePrm::AddPoint(int point_index) {
+bool BubblePrm::ConnectPoints(int point1_index, int point2_index) {
+
+  return true;
+}
+
+bool BubblePrm::AddPointToTree(int point_index) {
   if (visited_.at(point_index)) return true;
   visited_.at(point_index) = true;
 
-  int space_dimension (pqp_environment_->dimension());
-  EVectorXd current_point = EVectorXd::Map(
-    pqp_environment_->GetPoint(point_index), space_dimension);
-  std::vector<int> query_indices (pqp_environment_->KnnQuery(current_point, 5));
+  EVectorXd current_point = GetCoordinates(point_index);
+  std::vector<int> query_indices (pqp_environment_->KnnQuery(
+      current_point, 5));
 
-  for (auto& index : query_indices) {
-    EVectorXd temp = EVectorXd::Map(pqp_environment_->GetPoint(index),
-      space_dimension);
-    if (!visited_.at(index) && Connect(current_point, temp)) {
-      pq_.push(Edge(index, (end_ - temp).norm()));
-      parents_.at(index) = point_index;
+  for (auto& query_index : query_indices) {
+    EVectorXd temp = GetCoordinates(query_index);
+    if (!visited_.at(query_index) && ConnectPoints(point_index, query_index)) {
+      pq_.push(Edge(point_index, query_index, (end_ - temp).norm()));
+      // parents_.at(query_index) = point_index;
     }
   }
   return true;
@@ -40,7 +44,17 @@ bool BubblePrm::BuildTree() {
   return true;
 }
 
-bool BubblePrm::Connect() {
+void BubblePrm::LogResults() {
 
-  return true;
+}
+
+BubblePrm::EVectorXd BubblePrm::GetCoordinates(int point_index) const {
+  return EVectorXd::Map(pqp_environment_->GetPoint(point_index),
+    pqp_environment_->dimension());
+}
+
+BubblePrm::EVectorXd BubblePrm::HullIntersection(const Bubble& b1,
+    const Bubble& b2) const {
+  EVectorXd direction (b2.coordinates() - b1.coordinates());
+  return direction / fabs((direction.cwiseQuotient(b1.dimensions())).sum());
 }
