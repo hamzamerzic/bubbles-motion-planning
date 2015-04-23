@@ -185,8 +185,7 @@ bool PqpEnvironment::MakeBubble(EVectorXd& q, Bubble& bubble) {
   EVector3f T_temp (0.0, 0.0, 0.0);
 
   PQP_DistanceResult distance_res;
-  bubble.Resize(dimension_);
-  bubble.distance() = INFINITY;
+  bubble = Bubble(q);
 
   double max_axis_distance (0);
 
