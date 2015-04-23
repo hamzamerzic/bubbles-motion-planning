@@ -9,8 +9,8 @@ add_library(dh_parameter dh_parameter.cc)
 target_link_libraries(dh_parameter
                       PQP)
 
-add_library(simple_tree simple_tree.cc)
-target_link_libraries(simple_tree
+add_library(two_seg_prm two_seg_prm.cc)
+target_link_libraries(two_seg_prm
                       pqp_environment)
 
 add_executable(main main.cc)
@@ -26,10 +26,10 @@ target_link_libraries(dh_parameter_test
                       boost_unit_test_framework)
 add_test(DH_PARAMETER_TEST ${CMAKE_CURRENT_BINARY_DIR}/dh_parameter_test)
 
-add_executable(simple_tree_test simple_tree_test.cc)
-target_link_libraries(simple_tree_test
-                      simple_tree
+add_executable(two_seg_prm_test two_seg_prm_test.cc)
+target_link_libraries(two_seg_prm_test
+                      two_seg_prm
                       pqp_environment
                       naive_generator
                       boost_unit_test_framework)
-add_test(SIMPLE_TREE_TEST ${CMAKE_CURRENT_BINARY_DIR}/simple_tree_test)
+add_test(SIMPLE_TREE_TEST ${CMAKE_CURRENT_BINARY_DIR}/two_seg_prm_test)

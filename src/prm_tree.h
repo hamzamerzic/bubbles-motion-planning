@@ -28,16 +28,20 @@ public:
   typedef Eigen::VectorXd EVectorXd;
   PrmTree(PqpEnvironment* pqp_environment, EVectorXd& start, EVectorXd& end):
     pqp_environment_ (pqp_environment), start_ (start), end_ (end),
+    start_index_ (pqp_environment_->AddPoint(start)),
+    end_index_ (pqp_environment_->AddPoint(end)),
     space_size_ (pqp_environment->sample_space_size() + 2),
     visited_ (std::vector<bool>(space_size_, false)) {}
 
-  virtual bool TryConnect(EVectorXd& point1, EVectorXd& point2) = 0;
-  virtual bool AddPoint(int point_index) = 0;
+  virtual bool AddPointToTree(int point_index) = 0;
   virtual bool BuildTree() = 0;
+  virtual bool ConnectPoints(int point1_index, int point2_index) = 0;
+  virtual void LogResults() = 0;
 
 protected:
   std::unique_ptr<PqpEnvironment> pqp_environment_;
   EVectorXd start_, end_;
+  int start_index_, end_index_;
   int space_size_;
   std::vector<bool> visited_;
 

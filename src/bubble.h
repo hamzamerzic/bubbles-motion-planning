@@ -19,19 +19,22 @@
 
 #include <vector>
 #include <cmath>
+#include <utility>
 
 class Bubble {
 public:
-  Bubble(): distance_(INFINITY) {}
+  Bubble(): distance_(INFINITY), parent_(nullptr) {}
 
   double& distance() { return distance_; }
   const double Get(size_t i) const { return coordinates_.at(i); }
   void Set(size_t i, double value) { coordinates_.at(i) = value; }
+  void SetParent(Bubble* parent) { parent_ = std::shared_ptr<Bubble> (parent); }
   void Resize(size_t n) { coordinates_.resize(n); }
 
 private:
   std::vector<double> coordinates_;
   double distance_;
+  std::shared_ptr<Bubble> parent_;
 };
 
 #endif // BUBBLE_H_INCLUDED
