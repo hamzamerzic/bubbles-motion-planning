@@ -26,12 +26,13 @@ class Bubble {
 public:
   typedef Eigen::VectorXd EVectorXd;
   Bubble(): distance_(INFINITY), parent_(nullptr) {}
-  Bubble(EVectorXd& coordinates): coordinates_ (coordinates),
+  Bubble(const EVectorXd& coordinates): coordinates_ (coordinates),
       dimensions_ (EVectorXd(coordinates_.size())), distance_(INFINITY),
       parent_(nullptr) {}
 
-  EVectorXd coordinates() const { return coordinates_; }
-  EVectorXd dimensions() const { return dimensions_; }
+  const EVectorXd& coordinates() const { return coordinates_; }
+  const EVectorXd& dimensions() const { return dimensions_; }
+  const std::shared_ptr<Bubble>& parent() const { return parent_; }
   double& distance() { return distance_; }
   const double Get(size_t i) const { return dimensions_[i]; }
   void Set(size_t i, double value) { dimensions_[i] = value; }
