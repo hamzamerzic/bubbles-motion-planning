@@ -52,8 +52,8 @@ public:
   size_t AddPoint(EVectorXd& q);
   // Collision query - returns distance
   double CheckCollision(EVectorXd& q);
-  // Creates bubble - returns false if unable
-  bool MakeBubble(EVectorXd& q, Bubble& bubble);
+  // Creates bubble - returns false upon failure
+  bool MakeBubble(const EVectorXd& coordinates, Bubble* bubble);
   // Knn query - returns indices
   std::vector<int> KnnQuery(EVectorXd& q, int k);
 
