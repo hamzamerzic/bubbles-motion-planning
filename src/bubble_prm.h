@@ -19,6 +19,7 @@
 
 #include <vector>
 #include <queue>
+#include <memory>
 #include <Eigen/Dense>
 
 #include "prm_tree.h"
@@ -45,7 +46,7 @@ public:
   typedef Eigen::VectorXd EVectorXd;
   BubblePrm(PqpEnvironment* pqp_environment, EVectorXd& start, EVectorXd& end,
       double step_size, double collision_limit = 0.01):
-      PrmTree (pqp_environment, start, end),
+      PrmTree (pqp_environment, start, end), bubbles_ (space_size_, nullptr),
       step_size_ (step_size), collision_limit_ (collision_limit) {}
 
   virtual bool ConnectPoints(int point1_index, int point2_index);
@@ -55,9 +56,10 @@ public:
   EVectorXd GetCoordinates(int point_index) const;
 
 private:
-  EVectorXd HullIntersection(const Bubble& b1, const Bubble& b2) const;
+  static EVectorXd HullIntersection(const Bubble& b1,
+    const EVectorXd& b2_coordinates);
 
-  std::vector<Bubble*> bubbles_;
+  std::vector<std::shared_ptr<Bubble>> bubbles_;
   double step_size_, collision_limit_;
   std::priority_queue<Edge, std::vector<Edge>, EdgeCompareFunctor> pq_;
 

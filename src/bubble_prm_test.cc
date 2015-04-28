@@ -15,7 +15,7 @@
  *
 */
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE SimpleTreeTest
+#define BOOST_TEST_MODULE BubblePrmTest
 
 #include "bubble_prm.h"
 
