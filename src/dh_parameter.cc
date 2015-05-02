@@ -19,8 +19,8 @@
 #include <cmath>
 
 DhParameter::DhParameter(const double theta, const double d,
-                         const double a, const double alpha):
-                         translation_ (a*cos(theta), a*sin(theta), d) {
+                         const double a, const double alpha)
+    : translation_(a*cos(theta), a*sin(theta), d) {
 
   rotation_ << cos(theta), -sin(theta) * cos(alpha),  sin(theta) * sin(alpha),
                sin(theta),  cos(theta) * cos(alpha), -cos(theta) * sin(alpha),

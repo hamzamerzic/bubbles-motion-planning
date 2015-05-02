@@ -25,15 +25,15 @@
 #include <Eigen/Dense>
 
 
-// TODO: Check to place these typedefs in a namespace, or in the class
+// TODO(hamza): Check to place these typedefs in a namespace, or in the class
 // definition because it is also used in pqp environment
 typedef Eigen::Matrix<float, 3, 3, Eigen::RowMajor> EMatrix;
 typedef Eigen::Vector3f EVector;
-typedef PQP_REAL PqpQueryType[3];   //Return type for cleaner code
-                                    //Needed for PQP query
+typedef PQP_REAL PqpQueryType[3];   // Return type for cleaner code
+                                    // Needed for PQP query
 
 class DhParameter {
-public:
+ public:
   DhParameter(const double theta, const double d,
               const double a, const double alpha);
 
@@ -42,7 +42,7 @@ public:
   EMatrix& rotation() { return rotation_; }
   EVector& translation() { return translation_; }
 
-  //Returns pointers for PQP queries
+  // Returns pointers for PQP queries
   const PqpQueryType* RotData();
   const PQP_REAL* TransData();
 
@@ -52,9 +52,9 @@ public:
   // Used for placing a segment to origin
   const void InverseTransform(EMatrix& R, EVector& T) const;
 
-private:
+ private:
   EMatrix rotation_;
   EVector translation_;
 };
 
-#endif // DH_PARAMETER_H_INCLUDED
+#endif  // DH_PARAMETER_H_INCLUDED

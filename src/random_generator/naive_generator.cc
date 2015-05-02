@@ -17,9 +17,9 @@
 #include "naive_generator.h"
 
 NaiveGenerator::NaiveGenerator(
-    const std::vector<std::pair<double, double>>& limits):
-    space_dimension_ (limits.size()) {
-  for(auto& limit : limits)
+    const std::vector<std::pair<double, double>>& limits)
+    : space_dimension_(limits.size()) {
+  for (auto& limit : limits)
     distributions_.emplace_back(limit.first, limit.second);
 
   std::random_device rd;
@@ -35,11 +35,11 @@ std::vector<double> NaiveGenerator::CreatePoint() {
 
 std::unique_ptr<double[]> NaiveGenerator::CreateSampleSpace(size_t num_points) {
   std::unique_ptr<double[]> sample_space (
-    new double[num_points * space_dimension_]);
-  for (size_t i (0); i < num_points; ++i) {
-    for (size_t k (0); k < distributions_.size(); ++k)
+      new double[num_points * space_dimension_]);
+  for (size_t i = 0; i < num_points; ++i) {
+    for (size_t k = 0; k < space_dimension_; ++k)
       sample_space[i * space_dimension_ + k] =
-        distributions_.at(k)(random_engine_);
+        (distributions_.at(k))(random_engine_);
   }
   return sample_space;
 }

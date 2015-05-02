@@ -17,15 +17,14 @@
 #include "model_parser.h"
 
 #include <cmath>
+#include <PQP/PQP.h>
+#include <Eigen/Dense>
 #include <fstream>
 #include <memory>
 
-#include <PQP/PQP.h>
-#include <Eigen/Dense>
-
 PQP_Model* ModelParser::GetTransformModel(const std::string& model_file,
-                                           const EMatrix& R,
-                                           const EVector3f& T) {
+                                          const EMatrix& R,
+                                          const EVector3f& T) {
   std::ifstream input_file (model_file.c_str(), std::ios::binary);
   try {
     std::unique_ptr<PQP_Model> model (new PQP_Model);
@@ -33,7 +32,7 @@ PQP_Model* ModelParser::GetTransformModel(const std::string& model_file,
     char header[80] = "";         // Reads STL binary header
     input_file.read(header, 80);
 
-    unsigned num_tris (0);  // Reads number of triangles
+    unsigned num_tris = 0;  // Reads number of triangles
     input_file.read(reinterpret_cast<char*>(&num_tris), sizeof(num_tris));
 
     EVector3f vertex[3];  // Triangle represented as three vertices
@@ -41,9 +40,9 @@ PQP_Model* ModelParser::GetTransformModel(const std::string& model_file,
 
     model->BeginModel();
 
-    short temp (0);  // Used for taking two bits of data after a triangle
-    unsigned long counter (0);
-    while(counter < num_tris) {
+    int16_t temp = 0;  // Used for taking two bits of data after a triangle
+    uint64_t counter = 0;
+    while (counter < num_tris) {
       input_file.read(reinterpret_cast<char*>(surf_vec), sizeof(surf_vec));
 
       input_file.read(reinterpret_cast<char*>(&vertex[0]), sizeof(vertex[0]));
@@ -67,7 +66,7 @@ PQP_Model* ModelParser::GetTransformModel(const std::string& model_file,
   }
 }
 
-// TODO: Try to get rid of code repetition
+// TODO(hamza): Try to get rid of code repetition
 PQP_Model* ModelParser::GetModel(const std::string& model_file) {
   std::ifstream input_file (model_file.c_str(), std::ios::binary);
   try {
@@ -76,7 +75,7 @@ PQP_Model* ModelParser::GetModel(const std::string& model_file) {
     char header[80] = "";         // Reads STL binary header
     input_file.read(header, 80);
 
-    unsigned num_tris (0);  // Reads number of triangles
+    unsigned num_tris = 0;  // Reads number of triangles
     input_file.read(reinterpret_cast<char*>(&num_tris), sizeof(num_tris));
 
     float vertex[3][3];  // Triangle represented as three vertices
@@ -84,9 +83,9 @@ PQP_Model* ModelParser::GetModel(const std::string& model_file) {
 
     model->BeginModel();
 
-    short temp (0);  // Used for taking two bits of data after a triangle
-    unsigned long counter (0);
-    while(counter < num_tris) {
+    int16_t temp (0);  // Used for taking two bits of data after a triangle
+    uint64_t counter = 0;
+    while (counter < num_tris) {
       input_file.read(reinterpret_cast<char*>(surf_vec), sizeof(surf_vec));
 
       input_file.read(reinterpret_cast<char*>(&vertex[0]), sizeof(vertex[0]));
@@ -105,4 +104,3 @@ PQP_Model* ModelParser::GetModel(const std::string& model_file) {
     throw "File " + model_file + " error!";
   }
 }
-

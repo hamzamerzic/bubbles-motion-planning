@@ -17,21 +17,20 @@
 #ifndef MODEL_PARSER_H_INCLUDED
 #define MODEL_PARSER_H_INCLUDED
 
-#include <string>
 #include <cmath>
 #include <PQP/PQP.h>
 #include <Eigen/Dense>
+#include <string>
 
 class ModelParser {
   typedef Eigen::Matrix<float, 3, 3, Eigen::RowMajor> EMatrix;
   typedef Eigen::Vector3f EVector3f;
-
-public:
+ public:
   ModelParser() {}
   PQP_Model* GetTransformModel(const std::string& model_file,
                              const EMatrix& R, const EVector3f& T);
   PQP_Model* GetModel(const std::string& model_file);
-  // TODO: Add robot parameters getter
+  // TODO(hamza): Add robot parameters getter
 };
 
-#endif // MODEL_PARSER_H_INCLUDED
+#endif  // MODEL_PARSER_H_INCLUDED
