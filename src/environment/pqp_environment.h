@@ -17,12 +17,12 @@
 #ifndef PQP_ENVIRONMENT_H_INCLUDED
 #define PQP_ENVIRONMENT_H_INCLUDED
 
-#include <vector>
-#include <string>
-#include <memory>
 #include <cmath>
 #include <PQP/PQP.h>
 #include <Eigen/Dense>
+#include <vector>
+#include <string>
+#include <memory>
 #include <flann/flann.hpp>
 #include "../bubble.h"
 
@@ -36,7 +36,7 @@ class PqpEnvironment {
   typedef Eigen::Matrix<float, 3, 3, Eigen::RowMajor> EMatrix;
   typedef Eigen::Vector3f EVector3f;
 
-public:
+ public:
   PqpEnvironment(const std::vector<std::string>& robot_model_files,
                  const std::string& dh_table_file,
                  const std::string& obstacles_model_file,
@@ -53,11 +53,12 @@ public:
   // Collision query - returns distance
   double CheckCollision(EVectorXd& q);
   // Creates bubble - returns false upon failure
-  bool MakeBubble(const EVectorXd& coordinates, Bubble* bubble);
+  bool MakeBubble(const EVectorXd& coordinates,
+    std::shared_ptr<Bubble>& bubble);
   // Knn query - returns indices
   std::vector<int> KnnQuery(EVectorXd& q, int k);
 
-private:
+ private:
   bool LoadRobotModel(const std::vector<std::string>& robot_mode_files);
   bool LoadRobotParameters(const std::string& parameters_file);
   bool LoadObstacles(const std::string& obstacles_model_file);
@@ -69,11 +70,11 @@ private:
   std::vector<std::unique_ptr<PQP_Model>> segments_;
   std::vector<DhParameter> dh_table_;
   ModelParser parser_;
-  FlannPointArray* conf_sample_space_;
+  std::unique_ptr<FlannPointArray> conf_sample_space_;
   int sample_space_size_;
   size_t dimension_;
   // Cylinder needed for generating bubbles
   std::unique_ptr<PQP_Model> cylinder_;
 };
 
-#endif // PQP_ENVIRONMENT_H_INCLUDED
+#endif  // PQP_ENVIRONMENT_H_INCLUDED
