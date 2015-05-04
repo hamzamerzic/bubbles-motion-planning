@@ -19,32 +19,33 @@
 
 #include <vector>
 #include <memory>
+#include <string>
 #include <Eigen/Dense>
 
 #include "environment/pqp_environment.h"
 
 class PrmTree {
-public:
+ public:
   typedef Eigen::VectorXd EVectorXd;
-  PrmTree(PqpEnvironment* pqp_environment, EVectorXd& start, EVectorXd& end):
-    pqp_environment_ (pqp_environment), start_ (start), end_ (end),
-    start_index_ (pqp_environment_->AddPoint(start)),
-    end_index_ (pqp_environment_->AddPoint(end)),
-    space_size_ (pqp_environment->sample_space_size() + 2),
-    visited_ (std::vector<bool>(space_size_, false)) {}
+  PrmTree(PqpEnvironment* pqp_environment, EVectorXd& start, EVectorXd& end,
+          int knn_num)
+      : pqp_environment_(pqp_environment), start_(start), end_(end),
+        start_index_(pqp_environment_->AddPoint(start)),
+        end_index_(pqp_environment_->AddPoint(end)), knn_num_(knn_num),
+        space_size_(pqp_environment->sample_space_size() + 2),
+        visited_(std::vector<bool>(space_size_, false)) {}
 
   virtual bool ConnectPoints(int point1_index, int point2_index) = 0;
-  virtual bool AddPointToTree(int point_index) = 0;
+  virtual bool AddPointToTree(int point_index, double extra_weight) = 0;
   virtual bool BuildTree() = 0;
-  virtual void LogResults() = 0;
+  virtual void LogResults(const std::string& filename) = 0;
 
-protected:
+ protected:
   std::unique_ptr<PqpEnvironment> pqp_environment_;
   EVectorXd start_, end_;
   int start_index_, end_index_;
-  int space_size_;
+  int knn_num_, space_size_;
   std::vector<bool> visited_;
-
 };
 
-#endif // PRM_TREE_H_INCLUDED
+#endif  // PRM_TREE_H_INCLUDED

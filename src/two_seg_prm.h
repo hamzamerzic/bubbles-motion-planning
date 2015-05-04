@@ -19,14 +19,16 @@
 
 #include <vector>
 #include <queue>
+#include <string>
 #include <Eigen/Dense>
 
 #include "prm_tree.h"
 #include "environment/pqp_environment.h"
 
 struct Edge {
-  Edge(int point_index, double distance): point_index (point_index),
-                                             distance (distance) {}
+  Edge(int point_index, double distance)
+      : point_index(point_index), distance(distance) {}
+
   int point_index;
   double distance;
 };
@@ -38,26 +40,26 @@ struct EdgeCompareFunctor {
 };
 
 class TwoSegPrm : PrmTree {
-public:
+ public:
   typedef Eigen::VectorXd EVectorXd;
   TwoSegPrm(PqpEnvironment* pqp_environment, EVectorXd& start, EVectorXd& end,
-      double step_size, double collision_limit = 0.01):
-      PrmTree (pqp_environment, start, end),
-      parents_ (std::vector<int>(space_size_, -1)),
-      step_size_ (step_size), collision_limit_ (collision_limit) {}
+            int knn_num, double step_size, double collision_limit = 0.01)
+      : PrmTree(pqp_environment, start, end, knn_num),
+        parents_(std::vector<int>(space_size_, -1)),
+        step_size_(step_size), collision_limit_(collision_limit) {}
 
   virtual bool ConnectPoints(int point1_index, int point2_index);
-  virtual bool AddPointToTree(int point_index);
+  virtual bool AddPointToTree(int point_index, double extra_weight = 0);
   virtual bool BuildTree();
-  virtual void LogResults();
+  virtual void LogResults(const std::string& filename = "");
 
   EVectorXd GetPoint(int point_index);
   int InsertPoint(EVectorXd& point);
 
-private:
+ private:
   std::vector<int> parents_;
   double step_size_, collision_limit_;
   std::priority_queue<Edge, std::vector<Edge>, EdgeCompareFunctor> pq_;
 };
 
-#endif // TWO_SEG_PRM_H_INCLUDED
+#endif  // TWO_SEG_PRM_H_INCLUDED
