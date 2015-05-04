@@ -1,5 +1,5 @@
 # Bubble PRM
-Sampling based motion planning framework which uses probabilistic roadmap algorithm (PRM) with Quinlan's bubbles of free configuration space.
+Sampling based motion planning framework which uses probabilistic roadmap algorithm (PRM), along with bubbles of free configuration space.
 
 End product examples:
 
@@ -7,4 +7,4 @@ End product examples:
 
 ![ExampleHard](examples/hard1o.gif "Cluttered environment.")
 
-(Animations are recorded in RoboDK.)
+(Animations were recorded in [RoboDK](https://www.robodk.com/).)
