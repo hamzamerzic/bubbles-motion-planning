@@ -38,13 +38,9 @@ BOOST_AUTO_TEST_CASE(constructor) {
   PqpEnvironment pqp ({"../models/robot1_seg1.stl",
       "../models/robot1_seg2.stl"}, "../models/dh_table_test.txt",
       "../models/obstacles_test.stl", generator.get());
-
-  EVectorXd q (2); q << M_PI_2, M_PI_2;
-  double test = pqp.CheckCollision(q);
-  BOOST_CHECK_SMALL(test, 0.0001);
 }
 
-BOOST_AUTO_TEST_CASE(collision_query1) {
+BOOST_AUTO_TEST_CASE(distance_query1) {
   std::vector<std::pair<double, double>> limits;
   limits.emplace_back(0, 2 * M_PI);
   limits.emplace_back(0, 2 * M_PI);
@@ -55,11 +51,11 @@ BOOST_AUTO_TEST_CASE(collision_query1) {
       "../models/obstacles_test.stl", generator.get());
 
   EVectorXd q (2); q << M_PI_2, 0;
-  double test = pqp.CheckCollision(q);
+  double test = pqp.DistanceQuery(q);
   BOOST_CHECK_CLOSE(test, 0.9989, 0.0001);
 }
 
-BOOST_AUTO_TEST_CASE(collision_query2) {
+BOOST_AUTO_TEST_CASE(distance_query2) {
   std::vector<std::pair<double, double>> limits;
   limits.emplace_back(0, 2 * M_PI);
   limits.emplace_back(0, 2 * M_PI);
@@ -71,11 +67,11 @@ BOOST_AUTO_TEST_CASE(collision_query2) {
 
 
   EVectorXd q (2); q << M_PI_2, M_PI_2;
-  double test = pqp.CheckCollision(q);
+  double test = pqp.DistanceQuery(q);
   BOOST_CHECK_SMALL(test, 0.0001);
 }
 
-BOOST_AUTO_TEST_CASE(collision_query3) {
+BOOST_AUTO_TEST_CASE(distance_query3) {
   std::vector<std::pair<double, double>> limits;
   limits.emplace_back(0, 2 * M_PI);
   limits.emplace_back(0, 2 * M_PI);
@@ -86,7 +82,7 @@ BOOST_AUTO_TEST_CASE(collision_query3) {
       "../models/obstacles_test3.stl", generator.get());
 
   EVectorXd q (3); q << M_PI_2, M_PI_2, M_PI_2;
-  double test = pqp.CheckCollision(q);
+  double test = pqp.DistanceQuery(q);
   BOOST_CHECK_SMALL(test, 0.0001);
 }
 
