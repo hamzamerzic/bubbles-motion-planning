@@ -17,35 +17,41 @@
 #ifndef BUBBLE_H_INCLUDED
 #define BUBBLE_H_INCLUDED
 
-#include <vector>
 #include <cmath>
-#include <utility>
 #include <Eigen/Dense>
+#include <vector>
+#include <utility>
+#include <memory>
 
 class Bubble {
-public:
+ public:
   typedef Eigen::VectorXd EVectorXd;
-  Bubble(): distance_(INFINITY), parent_(nullptr) {}
-  Bubble(const EVectorXd& coordinates): coordinates_ (coordinates),
-      dimensions_ (EVectorXd(coordinates_.size())), distance_(INFINITY),
-      parent_(nullptr) {}
+  Bubble() : distance_(INFINITY), parent_(nullptr) {}
+  explicit Bubble(const EVectorXd& coordinates)
+      : coordinates_(coordinates),
+        dimensions_(INFINITY * EVectorXd::Ones(coordinates_.size())),
+        distance_(INFINITY),
+        parent_(nullptr) {}
 
   const EVectorXd& coordinates() const { return coordinates_; }
   const EVectorXd& dimensions() const { return dimensions_; }
-  const std::shared_ptr<Bubble>& parent() const { return parent_; }
+  std::shared_ptr<Bubble>& parent() { return parent_; }
   double& distance() { return distance_; }
-  const double Get(size_t i) const { return dimensions_[i]; }
-  void Set(size_t i, double value) { dimensions_[i] = value; }
-  void SetParent(Bubble* parent) { parent_ = std::shared_ptr<Bubble> (parent); }
+  const double GetCoordinate(size_t i) const { return coordinates_[i]; }
+  const double GetDimension(size_t i) const { return dimensions_[i]; }
+  void SetDimension(size_t i, double value) { dimensions_[i] = value; }
+  void SetParent(const std::shared_ptr<Bubble>& parent) {
+    parent_ = parent; }
+
   void Resize(size_t dimension) {
     coordinates_.resize(dimension);
     dimensions_.resize(dimension);
   }
 
-private:
+ private:
   EVectorXd coordinates_, dimensions_;
   double distance_;
   std::shared_ptr<Bubble> parent_;
 };
 
-#endif // BUBBLE_H_INCLUDED
+#endif  // BUBBLE_H_INCLUDED
