@@ -18,111 +18,188 @@
 #include <cmath>
 #include <memory>
 #include <queue>
-#include <tuple>
+#include <fstream>
 #include <iostream>
 
-const int max_connect_param = 16;
+struct QueueConnectorBubbleContainer {
+  QueueConnectorBubbleContainer(const std::shared_ptr<Bubble>& bubble1,
+                                const BubblePrm::EVectorXd& hull_intersect1,
+                                const std::shared_ptr<Bubble>& bubble2,
+                                const BubblePrm::EVectorXd& hull_intersect2)
+      : bubble1(bubble1), bubble2(bubble2), hull_intersect1(hull_intersect1),
+        hull_intersect2(hull_intersect2) {}
 
+  std::shared_ptr<Bubble> bubble1, bubble2;
+  BubblePrm::EVectorXd hull_intersect1, hull_intersect2;
+};
 
+void PrintPoint(const BubblePrm::EVectorXd& vec) {
+  for (unsigned i = 0; i < vec.size(); ++i) {
+    std::cout << vec[i] << " ";
+  }
+  std::cout << std::endl;
+}
 
 bool BubblePrm::ConnectPoints(int point1_index, int point2_index) {
-  if (visited_.at(point2_index))
-    return false;
-  std::shared_ptr<Bubble> b1 (bubbles_.at(point1_index)),
-    b2 (bubbles_.at(point2_index));
+  std::shared_ptr<Bubble> b1 = bubbles_.at(point1_index),
+    b2 = bubbles_.at(point2_index);
 
-  // We store bubble intersections, because those must be computed only once,
-  // along with pointers to bubbles in order to be able to connect the bubbles
-  std::queue<std::tuple<EVectorXd, EVectorXd, Bubble*, Bubble*>> q_connector;
-  q_connector.emplace(HullIntersection(*b1, b2->coordinates()),
-    HullIntersection(*b2, b1->coordinates()), b1.get(), b2.get());
+  // Bubble intersections are stored, because they can be computed only once,
+  // along with bubble pointers in order to be able to connect the bubbles
+  std::queue<QueueConnectorBubbleContainer> q_connector;
 
-  int counter (0);
-  while (!q_connector.empty() && counter++ < max_connect_param) {
-    auto& q_edge (q_connector.front()); q_connector.pop();
+  EVectorXd init_intersect_left = HullIntersection(*b1, b2->coordinates()),
+    init_intersect_right = HullIntersection(*b2, b1->coordinates());
 
-    EVectorXd mid ((std::get<0>(q_edge) + std::get<1>(q_edge)) / 2);
+  if ((init_intersect_left - b1->coordinates()).norm() +
+      (init_intersect_right - b2->coordinates()).norm() >
+      (b2->coordinates() - b1->coordinates()).norm()) {
+    b2->SetParent(b1);
+    return true;
+  }
+  q_connector.emplace(b1, init_intersect_left, b2, init_intersect_right);
+
+  int counter = 0;
+  while (!q_connector.empty() && counter++ < max_connect_param_) {
+    auto q_edge = q_connector.front(); q_connector.pop();
+
+    EVectorXd mid_coordinates =
+        (q_edge.hull_intersect1 + q_edge.hull_intersect2) / 2;
     std::shared_ptr<Bubble> mid_bubble;
-    if (!pqp_environment_->MakeBubble(mid, mid_bubble.get())) {
-      b2->SetParent(nullptr);  // Still no parents
+    if (!pqp_environment_->MakeBubble(mid_coordinates, mid_bubble)) {
+      b2->parent().reset();  // Still no parents
       return false;
     }
 
-    EVectorXd left_intersect (HullIntersection(*mid_bubble,
-        std::get<0>(q_edge))),
-      right_intersect (HullIntersection(*mid_bubble, std::get<1>(q_edge)));
+    EVectorXd left_intersect = HullIntersection(*mid_bubble,
+        q_edge.hull_intersect1),
+      right_intersect = HullIntersection(*mid_bubble, q_edge.hull_intersect2);
 
-    if ((left_intersect - mid).norm() < (std::get<0>(q_edge) - mid).norm()) {
-      q_connector.push(std::make_tuple(std::get<0>(q_edge), left_intersect,
-        std::get<2>(q_edge), mid_bubble.get()));
-    }
-    else {
-      mid_bubble->SetParent(std::get<2>(q_edge));
-    }
-    if ((right_intersect - mid).norm() < (std::get<1>(q_edge) - mid).norm()) {
-      q_connector.push(std::make_tuple(right_intersect, std::get<1>(q_edge),
-        mid_bubble.get(), std::get<3>(q_edge)));
-    }
-    else {
-      std::get<3>(q_edge)->SetParent(mid_bubble.get());
+    if ((left_intersect - mid_coordinates).norm() <
+        (q_edge.hull_intersect1 - mid_coordinates).norm()) {
+      q_connector.emplace(q_edge.bubble1, q_edge.hull_intersect1, mid_bubble,
+          left_intersect);
+      q_connector.emplace(mid_bubble, right_intersect, q_edge.bubble2,
+          q_edge.hull_intersect2);
+    } else {
+      q_edge.bubble2->SetParent(mid_bubble);
+      mid_bubble->SetParent(q_edge.bubble1);
     }
   }
-
-  return counter < max_connect_param;
+  if (counter >= max_connect_param_) {
+    std::cout << "Not connected!" << std::endl;
+    b2->parent().reset();
+    return false;
+  }
+  return true;
 }
 
-bool BubblePrm::AddPointToTree(int point_index) {
-  if (visited_.at(point_index)) return true;
+bool BubblePrm::AddPointToTree(int point_index, double extra_weight) {
+  if (visited_.at(point_index)) return false;
   visited_.at(point_index) = true;
 
   EVectorXd current_point_coordinates = GetCoordinates(point_index);
-  std::vector<int> query_indices (pqp_environment_->KnnQuery(
-      current_point_coordinates, 15));
+  std::vector<int> query_indices = pqp_environment_->KnnQuery(
+      current_point_coordinates, knn_num_);
 
   for (auto& query_index : query_indices) {
-    if (visited_.at(query_index))  // Checks for previous Connect attempts
+    if (visited_.at(query_index))
+      // Checks for previous connect attempts
       continue;
 
     EVectorXd query_cords = GetCoordinates(query_index);
-    if (!pqp_environment_->MakeBubble(query_cords,
-        bubbles_.at(query_index).get())) {
+    if (bubbles_.at(query_index) != nullptr ||
+        pqp_environment_->MakeBubble(query_cords, bubbles_.at(query_index)))
+      pq_.emplace(point_index, query_index,
+          ((end_ - query_cords).cwiseQuotient(
+          bubbles_.at(query_index)->dimensions())).norm() + extra_weight + 0.25,
+          extra_weight + 0.25);
+    else
       visited_.at(query_index) = true;  // Indicate that a bubble cannot be
                                         // created at query_coo
-      continue;
-    }
-
-    if (ConnectPoints(point_index, query_index)) {
-      pq_.push(Edge(point_index, query_index, (end_ - query_cords).norm()));
-    }
   }
-
   return true;
 }
 
 bool BubblePrm::BuildTree() {
-  if (!pqp_environment_->MakeBubble(start_, bubbles_.at(start_index_).get()))
+  std::cout << "*****Build started.*****" << std::endl;
+  if (!pqp_environment_->MakeBubble(start_, bubbles_.at(start_index_))) {
+    std::cout << "Collision at the initial configuration!" << std::endl;
     return false;
-  AddPointToTree(start_index_);
+  }
+  if (!pqp_environment_->MakeBubble(end_, bubbles_.at(end_index_))) {
+    std::cout << "Collision at the final configuration!" << std::endl;
+    return false;
+  }
+  bubbles_.at(end_index_).reset();
 
+  AddPointToTree(start_index_);
+  std::cout << "Added initial point to tree!" << std::endl;
+
+  int counter = 1;
   while (!pq_.empty() && !visited_.at(end_index_)) {
-    auto& temp (pq_.top()); pq_.pop();
-    AddPointToTree(temp.point2_index);
+    Edge temp = pq_.top(); pq_.pop();
+    std::cout << "Current point weight: " << temp.weight << std::endl;
+    std::cout << "Current q size: " << pq_.size() << std::endl;
+    if (visited_.at(temp.point2_index))
+      continue;
+    if (ConnectPoints(temp.point1_index, temp.point2_index)) {
+      AddPointToTree(temp.point2_index, temp.extra_weight);
+      std::cout << "ADDED POINT TO TREE! " << counter++ << std::endl;
+    }
   }
 
-  return !pq_.empty();
+  if (bubbles_.at(end_index_) != nullptr &&
+      bubbles_.at(end_index_)->parent() != nullptr) {
+    std::cout << "Tree successsfully built!" << std::endl;
+    return true;
+  } else {
+    std::cout << "Building tree unsucessful!" << std::endl;
+    return false;
+  }
 }
 
-void BubblePrm::LogResults() {
-  auto it (bubbles_.at(end_index_));
-  if (it == nullptr) {
-    std::cout << "Tree creation unsuccessful!" << std::endl;
+void BubblePrm::LogResults(const std::string& filename) {
+  std::cout << "Writing trajectory script to " << filename << "..." <<
+    std::endl;
+
+  auto trajectory_it = bubbles_.at(end_index_);
+  std::ofstream file (filename);
+  file << "# Autogenerated script. Copyright (C) 2015 Hamza Merzic." <<
+    std::endl << "# Bubbles motion planning." << std::endl;
+
+  file << "from robolink import *" << std::endl << "from robodk import *" <<
+    std::endl << "RL = Robolink()" << std::endl << std::endl <<
+    "robot = RL.Item('ABB IRB 120-3/0.6')" << std::endl;
+
+  if (trajectory_it == nullptr) {
+    std::cout << "Trajectory writing unsuccessful!" << std::endl;
     return;
   }
 
-  while (it != nullptr) {
-    std::cout << it->coordinates() << std::endl;
-    it = it->parent();
+  std::vector<EVectorXd> trajectory_deg;
+  while (trajectory_it != nullptr) {
+    trajectory_deg.push_back(180 * trajectory_it->coordinates() / M_PI);
+    trajectory_it = trajectory_it->parent();
   }
+
+  file << "robot.setJoints([";
+  for (unsigned i = 0; i < trajectory_deg.rbegin()->size() - 1; ++i) {
+    file << (*trajectory_deg.rbegin())[i] << ", ";
+  }
+  file << (*trajectory_deg.rbegin())[trajectory_deg.rbegin()->size() - 1] <<
+    "])" << std::endl;
+
+  for (auto it = trajectory_deg.rbegin() + 1; it != trajectory_deg.rend();
+      ++it) {
+    file << "robot.MoveJ([";
+    for (int i = 0; i < it->size() - 1; ++i) {
+      file << (*it)[i] << ", ";
+    }
+    file << (*it)[it->size() - 1] << "])" << std::endl;
+  }
+
+  std::cout << "Trajectory successfully written!" << std::endl;
 }
 
 BubblePrm::EVectorXd BubblePrm::GetCoordinates(int point_index) const {
@@ -132,6 +209,8 @@ BubblePrm::EVectorXd BubblePrm::GetCoordinates(int point_index) const {
 
 BubblePrm::EVectorXd BubblePrm::HullIntersection(const Bubble& b1,
     const EVectorXd& b2_coordinates) {
-  EVectorXd direction (b2_coordinates - b1.coordinates());
-  return direction / fabs((direction.cwiseQuotient(b1.dimensions())).sum());
+  // std::cerr << "Loading hull.\n";
+  EVectorXd direction = b2_coordinates - b1.coordinates();
+  return b1.coordinates() +
+    direction / ((direction.cwiseQuotient(b1.dimensions())).cwiseAbs()).sum();
 }

@@ -17,22 +17,24 @@
 #ifndef BUBBLE_PRM_H_INCLUDED
 #define BUBBLE_PRM_H_INCLUDED
 
+#include <Eigen/Dense>
 #include <vector>
 #include <queue>
 #include <memory>
-#include <Eigen/Dense>
+#include <string>
 
 #include "prm_tree.h"
 #include "environment/pqp_environment.h"
 #include "bubble.h"
 
 struct Edge {
-  Edge(int point1_index, int point2_index, double weight):
-      point1_index (point1_index), point2_index (point2_index),
-      weight (weight) {};
+  Edge(int point1_index, int point2_index, double weight,
+       double extra_weight)
+      : point1_index(point1_index), point2_index(point2_index),
+        weight(weight), extra_weight(extra_weight) {}
 
   int point1_index, point2_index;
-  double weight;
+  double weight, extra_weight;
 };
 
 struct EdgeCompareFunctor {
@@ -42,27 +44,30 @@ struct EdgeCompareFunctor {
 };
 
 class BubblePrm : PrmTree {
-public:
+ public:
   typedef Eigen::VectorXd EVectorXd;
   BubblePrm(PqpEnvironment* pqp_environment, EVectorXd& start, EVectorXd& end,
-      double step_size, double collision_limit = 0.01):
-      PrmTree (pqp_environment, start, end), bubbles_ (space_size_, nullptr),
-      step_size_ (step_size), collision_limit_ (collision_limit) {}
+            int knn_num, double step_size, double collision_limit = 0.01,
+            int max_connect_param = 16)
+      : PrmTree(pqp_environment, start, end, knn_num),
+        bubbles_(space_size_, nullptr), step_size_(step_size),
+        collision_limit_(collision_limit),
+        max_connect_param_(max_connect_param) {}
 
   virtual bool ConnectPoints(int point1_index, int point2_index);
-  virtual bool AddPointToTree(int point_index);
+  virtual bool AddPointToTree(int point_index, double extra_weight = 0);
   virtual bool BuildTree();
-  virtual void LogResults();
+  virtual void LogResults(const std::string& filename);
   EVectorXd GetCoordinates(int point_index) const;
 
-private:
+ private:
   static EVectorXd HullIntersection(const Bubble& b1,
     const EVectorXd& b2_coordinates);
 
   std::vector<std::shared_ptr<Bubble>> bubbles_;
   double step_size_, collision_limit_;
+  int max_connect_param_;
   std::priority_queue<Edge, std::vector<Edge>, EdgeCompareFunctor> pq_;
-
 };
 
-#endif // BUBBLE_PRM_H_INCLUDED
+#endif  // BUBBLE_PRM_H_INCLUDED
