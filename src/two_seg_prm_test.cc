@@ -36,14 +36,14 @@ BOOST_AUTO_TEST_CASE(connect) {
   limits.emplace_back(0, 2 * M_PI);
   std::unique_ptr<RandomSpaceGeneratorInterface> generator (
     new NaiveGenerator(limits));
-  PqpEnvironment* pqp (new PqpEnvironment(
-      {"models/robot1_seg1.stl", "models/robot1_seg2.stl"},
-      "models/dh_table_test.txt","models/obstacles_test.stl",
-      generator.get()));
+  std::unique_ptr<PqpEnvironment> pqp (new PqpEnvironment(
+      {"models/two-seg/robot1_seg1.stl", "models/two-seg/robot1_seg2.stl"},
+      "models/two-seg/dh_table_test.txt", "models/two-seg/obstacles_test.stl",
+      generator.release()));
 
   EVectorXd start (2); start << 0, 0;
   EVectorXd end (2); end << 1, 1;
-  TwoSegPrm two_seg_prm (pqp, start, end, 0.01);
+  TwoSegPrm two_seg_prm (pqp.release(), start, end, 15, 0.01);
   EVectorXd qbegin (2); qbegin << 0, 0;
   EVectorXd qend (2); qend << 1, 1;
   int qbegin_ind (two_seg_prm.InsertPoint(qbegin)),
@@ -57,14 +57,14 @@ BOOST_AUTO_TEST_CASE(connect1) {
   limits.emplace_back(0, 2 * M_PI);
   std::unique_ptr<RandomSpaceGeneratorInterface> generator (
     new NaiveGenerator(limits));
-  PqpEnvironment* pqp (new PqpEnvironment(
-      {"models/robot1_seg1.stl", "models/robot1_seg2.stl"},
-      "models/dh_table_test.txt","models/obstacles_test.stl",
-      generator.get(), 1000));
+  std::unique_ptr<PqpEnvironment> pqp (new PqpEnvironment(
+      {"models/two-seg/robot1_seg1.stl", "models/two-seg/robot1_seg2.stl"},
+      "models/two-seg/dh_table_test.txt", "models/two-seg/obstacles_test.stl",
+      generator.release(), 10000));
 
   EVectorXd start (2); start << 0, 0;
   EVectorXd end (2); end << 1, 1;
-  TwoSegPrm two_seg_prm (pqp, start, end, 0.01);
+  TwoSegPrm two_seg_prm (pqp.release(), start, end, 15, 0.01);
   EVectorXd qbegin (2); qbegin << M_PI_2 - 0.1, M_PI_2 - 0.1;
   EVectorXd qend (2); qend << M_PI_2 + 0.1, M_PI_2 + 0.1;
   int qbegin_ind (two_seg_prm.InsertPoint(qbegin)),
