@@ -112,8 +112,10 @@ bool BubblePrm::AddPointToTree(int point_index, double extra_weight) {
         pqp_environment_->MakeBubble(query_cords, bubbles_.at(query_index)))
       pq_.emplace(point_index, query_index,
           ((end_ - query_cords).cwiseQuotient(
-          bubbles_.at(query_index)->dimensions())).norm() + extra_weight + 0.25,
-          extra_weight + 0.25);
+          bubbles_.at(query_index)->dimensions())).norm() +
+          (start_ - current_point_coordinates).norm()
+          /*+ extra_weight + 0.25*/,
+          0 /*extra_weight + 0.25 // hardcoded weight gain*/);
     else
       visited_.at(query_index) = true;  // Indicate that a bubble cannot be
                                         // created at query_coo
