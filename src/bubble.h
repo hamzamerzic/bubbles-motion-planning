@@ -47,6 +47,10 @@ class Bubble {
     coordinates_.resize(dimension);
     dimensions_.resize(dimension);
   }
+  EVectorXd HullIntersection(const EVectorXd& direction) {
+    return coordinates() +
+      direction / ((direction.cwiseQuotient(dimensions())).cwiseAbs()).sum();
+  }
 
  private:
   EVectorXd coordinates_, dimensions_;

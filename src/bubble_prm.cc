@@ -48,8 +48,10 @@ bool BubblePrm::ConnectPoints(int point1_index, int point2_index) {
   // along with bubble pointers in order to be able to connect the bubbles
   std::queue<QueueConnectorBubbleContainer> q_connector;
 
-  EVectorXd init_intersect_left = HullIntersection(*b1, b2->coordinates()),
-    init_intersect_right = HullIntersection(*b2, b1->coordinates());
+  EVectorXd init_intersect_left = b1->HullIntersection(
+        b2->coordinates() - b1->coordinates()),
+    init_intersect_right = b2->HullIntersection(
+        b1->coordinates() - b2->coordinates());
 
   if ((init_intersect_left - b1->coordinates()).norm() +
       (init_intersect_right - b2->coordinates()).norm() >
@@ -71,9 +73,10 @@ bool BubblePrm::ConnectPoints(int point1_index, int point2_index) {
       return false;
     }
 
-    EVectorXd left_intersect = HullIntersection(*mid_bubble,
-        q_edge.hull_intersect1),
-      right_intersect = HullIntersection(*mid_bubble, q_edge.hull_intersect2);
+    EVectorXd left_intersect = mid_bubble->HullIntersection(
+          q_edge.hull_intersect1 - mid_bubble->coordinates()),
+      right_intersect = mid_bubble->HullIntersection(
+          q_edge.hull_intersect2 - mid_bubble->coordinates());
 
     if ((left_intersect - mid_coordinates).norm() <
         (q_edge.hull_intersect1 - mid_coordinates).norm()) {
@@ -115,7 +118,7 @@ bool BubblePrm::AddPointToTree(int point_index, double extra_weight) {
           bubbles_.at(query_index)->dimensions())).norm() +
           (start_ - current_point_coordinates).norm()
           /*+ extra_weight + 0.25*/,
-          0 /*extra_weight + 0.25 // hardcoded weight gain*/);
+          0 /*extra_weight + 0.25 // hard-coded weight gain*/);
     else
       visited_.at(query_index) = true;  // Indicate that a bubble cannot be
                                         // created at query_coo
@@ -207,12 +210,4 @@ void BubblePrm::LogResults(const std::string& filename) {
 BubblePrm::EVectorXd BubblePrm::GetCoordinates(int point_index) const {
   return EVectorXd::Map(pqp_environment_->GetPoint(point_index),
     pqp_environment_->dimension());
-}
-
-BubblePrm::EVectorXd BubblePrm::HullIntersection(const Bubble& b1,
-    const EVectorXd& b2_coordinates) {
-  // std::cerr << "Loading hull.\n";
-  EVectorXd direction = b2_coordinates - b1.coordinates();
-  return b1.coordinates() +
-    direction / ((direction.cwiseQuotient(b1.dimensions())).cwiseAbs()).sum();
 }

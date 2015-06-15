@@ -61,9 +61,6 @@ class BubblePrm : PrmTree {
   EVectorXd GetCoordinates(int point_index) const;
 
  private:
-  static EVectorXd HullIntersection(const Bubble& b1,
-    const EVectorXd& b2_coordinates);
-
   std::vector<std::shared_ptr<Bubble>> bubbles_;
   double step_size_, collision_limit_;
   int max_connect_param_;
