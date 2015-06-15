@@ -17,6 +17,10 @@ add_library(bubble_prm bubble_prm.cc)
 target_link_libraries(bubble_prm
                       pqp_environment)
 
+add_library(lazy_prm lazy_prm.cc)
+target_link_libraries(lazy_prm
+                      pqp_environment)
+
 add_executable(main main.cc)
 target_link_libraries(main
                       PQP)
