@@ -35,6 +35,10 @@ class PrmTree {
         space_size_(pqp_environment->sample_space_size() + 2),
         visited_(std::vector<bool>(space_size_, false)) {}
 
+  virtual EVectorXd GetCoordinates(int point_index) const {
+    return EVectorXd::Map(pqp_environment_->GetPoint(point_index),
+        pqp_environment_->dimension());
+  }
   virtual bool ConnectPoints(int point1_index, int point2_index) = 0;
   virtual bool AddPointToTree(int point_index, double extra_weight) = 0;
   virtual bool BuildTree() = 0;

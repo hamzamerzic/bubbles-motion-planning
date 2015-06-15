@@ -47,18 +47,16 @@ class BubblePrm : PrmTree {
  public:
   typedef Eigen::VectorXd EVectorXd;
   BubblePrm(PqpEnvironment* pqp_environment, EVectorXd& start, EVectorXd& end,
-            int knn_num, double step_size, double collision_limit = 0.01,
-            int max_connect_param = 16)
+            int knn_num,  // Number of nearest neighbors
+            int max_connect_param = 256  // Max binary splits for ConnectPoints
+            )
       : PrmTree(pqp_environment, start, end, knn_num),
-        bubbles_(space_size_, nullptr), step_size_(step_size),
-        collision_limit_(collision_limit),
-        max_connect_param_(max_connect_param) {}
+        bubbles_(space_size_, nullptr), max_connect_param_(max_connect_param) {}
 
   virtual bool ConnectPoints(int point1_index, int point2_index);
   virtual bool AddPointToTree(int point_index, double extra_weight = 0);
   virtual bool BuildTree();
   virtual void LogResults(const std::string& filename);
-  EVectorXd GetCoordinates(int point_index) const;
 
  private:
   std::vector<std::shared_ptr<Bubble>> bubbles_;

@@ -206,8 +206,3 @@ void BubblePrm::LogResults(const std::string& filename) {
 
   std::cout << "Trajectory successfully written!" << std::endl;
 }
-
-BubblePrm::EVectorXd BubblePrm::GetCoordinates(int point_index) const {
-  return EVectorXd::Map(pqp_environment_->GetPoint(point_index),
-    pqp_environment_->dimension());
-}

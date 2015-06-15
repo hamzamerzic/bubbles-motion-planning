@@ -96,7 +96,7 @@ BOOST_AUTO_TEST_CASE(build) {
                            -0.2443460953,  // -14
                            -0.5235987756;  // -30
 
-  BubblePrm bubble_prm (pqp.release(), start, end, 20, 0.01);
+  BubblePrm bubble_prm (pqp.release(), start, end, 20);
   BOOST_CHECK_EQUAL(bubble_prm.BuildTree(), true);
   bubble_prm.LogResults("RDKScript.py");
 }
@@ -132,7 +132,7 @@ BOOST_AUTO_TEST_CASE(build1) {
                              0.20943951,   // 12
                             -2.35619449;   // -135
 
-  BubblePrm bubble_prm (pqp.release(), start, end, 20, 0.01);
+  BubblePrm bubble_prm (pqp.release(), start, end, 20);
   BOOST_CHECK_EQUAL(bubble_prm.BuildTree(), true);
   bubble_prm.LogResults("RDKScript1.py");
 }
@@ -167,7 +167,7 @@ BOOST_AUTO_TEST_CASE(build2) {
                             0.7330382858,  // 42
                             3.839724354;   // 220
 
-  BubblePrm bubble_prm (pqp.release(), start, end, 200, 0.01, 256);
+  BubblePrm bubble_prm (pqp.release(), start, end, 200);
   BOOST_CHECK_EQUAL(bubble_prm.BuildTree(), true);
   bubble_prm.LogResults("RDKScript2.py");
 }
@@ -202,7 +202,7 @@ BOOST_AUTO_TEST_CASE(build3) {
                             -0.5235987756,  // -30
                             -4.36332313;    // -250
 
-  BubblePrm bubble_prm (pqp.release(), start, end, 200, 0.01, 256);
+  BubblePrm bubble_prm (pqp.release(), start, end, 200);
   BOOST_CHECK_EQUAL(bubble_prm.BuildTree(), true);
   bubble_prm.LogResults("RDKScript3.py");
 }
@@ -237,7 +237,7 @@ BOOST_AUTO_TEST_CASE(build4) {
                              0.20943951,
                             -2.35619449;
 
-  BubblePrm bubble_prm (pqp.release(), start, end, 15, 0.01);
+  BubblePrm bubble_prm (pqp.release(), start, end, 15);
   BOOST_CHECK_EQUAL(bubble_prm.BuildTree(), false);
 }
 
@@ -272,7 +272,7 @@ BOOST_AUTO_TEST_CASE(build5) {
                             0.0,
                             0.0;
 
-  BubblePrm bubble_prm (pqp.release(), start, end, 15, 0.01);
+  BubblePrm bubble_prm (pqp.release(), start, end, 15);
   BOOST_CHECK_EQUAL(bubble_prm.BuildTree(), false);
 }
 
@@ -306,6 +306,6 @@ BOOST_AUTO_TEST_CASE(build6) {
                              0.20943951,
                             -2.35619449;
 
-  BubblePrm bubble_prm (pqp.release(), start, end, 15, 0.01);
+  BubblePrm bubble_prm (pqp.release(), start, end, 15);
   BOOST_CHECK_EQUAL(bubble_prm.BuildTree(), false);
 }
