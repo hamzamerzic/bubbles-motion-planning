@@ -142,6 +142,10 @@ size_t PqpEnvironment::AddPoint(EVectorXd& q) {
   return conf_sample_space_->size() - 1;
 }
 
+void PqpEnvironment::RemovePoint(int point_index) {
+  conf_sample_space_->removePoint(point_index);
+}
+
 bool PqpEnvironment::MakeBubble(const EVectorXd& coordinates,
     std::shared_ptr<Bubble>& bubble) {
 

@@ -48,7 +48,7 @@ class BubblePrm : PrmTree {
   typedef Eigen::VectorXd EVectorXd;
   BubblePrm(PqpEnvironment* pqp_environment, EVectorXd& start, EVectorXd& end,
             int knn_num,  // Number of nearest neighbors
-            int max_connect_param = 256  // Max binary splits for ConnectPoints
+            int max_connect_param = 128  // Max binary splits for ConnectPoints
             )
       : PrmTree(pqp_environment, start, end, knn_num),
         bubbles_(space_size_, nullptr), max_connect_param_(max_connect_param) {}

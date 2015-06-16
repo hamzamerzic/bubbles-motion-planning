@@ -50,6 +50,8 @@ class PqpEnvironment {
   }
   // Adds a point and returns it's index
   size_t AddPoint(EVectorXd& q);
+  // Removes a point to potentially speed up the search
+  void RemovePoint(int point_index);
   // Creates bubble - returns false upon failure
   bool MakeBubble(const EVectorXd& coordinates,
     std::shared_ptr<Bubble>& bubble);

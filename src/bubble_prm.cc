@@ -41,8 +41,13 @@ void PrintPoint(const BubblePrm::EVectorXd& vec) {
 }
 
 bool BubblePrm::ConnectPoints(int point1_index, int point2_index) {
-  std::shared_ptr<Bubble> b1 = bubbles_.at(point1_index),
-    b2 = bubbles_.at(point2_index);
+  std::shared_ptr<Bubble> b1 = bubbles_.at(point1_index), /*b2;
+  if (bubbles_.at(point2_index) == nullptr && !pqp_environment_->MakeBubble(
+        GetCoordinates(point2_index), bubbles_.at(point2_index))) {
+    visited_.at(point2_index) = true;
+    return false;
+  }*/
+                          b2 = bubbles_.at(point2_index);
 
   // Bubble intersections are stored, because they can be computed only once,
   // along with bubble pointers in order to be able to connect the bubbles
@@ -100,6 +105,7 @@ bool BubblePrm::ConnectPoints(int point1_index, int point2_index) {
 bool BubblePrm::AddPointToTree(int point_index, double extra_weight) {
   if (visited_.at(point_index)) return false;
   visited_.at(point_index) = true;
+  pqp_environment_->RemovePoint(point_index);
 
   EVectorXd current_point_coordinates = GetCoordinates(point_index);
   std::vector<int> query_indices = pqp_environment_->KnnQuery(
@@ -107,7 +113,7 @@ bool BubblePrm::AddPointToTree(int point_index, double extra_weight) {
 
   for (auto& query_index : query_indices) {
     if (visited_.at(query_index))
-      // Checks for previous connect attempts
+      // Skips visited points
       continue;
 
     EVectorXd query_cords = GetCoordinates(query_index);
@@ -115,13 +121,16 @@ bool BubblePrm::AddPointToTree(int point_index, double extra_weight) {
         pqp_environment_->MakeBubble(query_cords, bubbles_.at(query_index)))
       pq_.emplace(point_index, query_index,
           ((end_ - query_cords).cwiseQuotient(
-          bubbles_.at(query_index)->dimensions())).norm() +
-          (start_ - current_point_coordinates).norm()
+          (4 * bubbles_.at(query_index)->dimensions() +
+          current_point_coordinates) / 5)).norm() +
+          (start_ - query_cords).norm() * 0.1
           /*+ extra_weight + 0.25*/,
           0 /*extra_weight + 0.25 // hard-coded weight gain*/);
-    else
+    else {
       visited_.at(query_index) = true;  // Indicate that a bubble cannot be
-                                        // created at query_coo
+                                        // created at query_cords
+      pqp_environment_->RemovePoint(query_index);
+    }
   }
   return true;
 }

@@ -167,7 +167,7 @@ BOOST_AUTO_TEST_CASE(build2) {
                             0.7330382858,  // 42
                             3.839724354;   // 220
 
-  BubblePrm bubble_prm (pqp.release(), start, end, 200);
+  BubblePrm bubble_prm (pqp.release(), start, end, 100);
   BOOST_CHECK_EQUAL(bubble_prm.BuildTree(), true);
   bubble_prm.LogResults("RDKScript2.py");
 }
@@ -202,7 +202,7 @@ BOOST_AUTO_TEST_CASE(build3) {
                             -0.5235987756,  // -30
                             -4.36332313;    // -250
 
-  BubblePrm bubble_prm (pqp.release(), start, end, 200);
+  BubblePrm bubble_prm (pqp.release(), start, end, 100);
   BOOST_CHECK_EQUAL(bubble_prm.BuildTree(), true);
   bubble_prm.LogResults("RDKScript3.py");
 }
