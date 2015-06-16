@@ -238,6 +238,31 @@ double PqpEnvironment::DistanceQuery(EVectorXd& q) {
   return min_distance;
 }
 
+bool PqpEnvironment::CollisionQuery(EVectorXd& q) {
+  EMatrix R = EMatrix::Identity();
+  EVector3f T (0.0, 0.0, 0.0);
+  // Static environment transform
+  EMatrix R_temp = EMatrix::Identity();
+  EVector3f T_temp (0.0, 0.0, 0.0);
+
+  PQP_CollideResult collision_res;
+
+  for (size_t i = 0; i < dimension_; ++i) {
+    R = R * Eigen::AngleAxisf(q[i], EVector::UnitZ());
+    PQP_Collide(&collision_res, reinterpret_cast<PQP_REAL(*)[3]>(R.data()),
+      T.data(), segments_.at(i).get(),
+      reinterpret_cast<PQP_REAL(*)[3]>(R_temp.data()), T_temp.data(),
+      obstacles_.get(), PQP_FIRST_CONTACT);
+
+    if (collision_res.NumPairs())
+      return false;  // Collision
+
+    dh_table_.at(i).Transform(R, T);
+  }
+
+  return true;
+}
+
 std::vector<int> PqpEnvironment::KnnQuery(EVectorXd& q, int k) {
   flann::Matrix<double> query (q.data(), 1, q.size());
 

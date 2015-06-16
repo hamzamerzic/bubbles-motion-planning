@@ -41,7 +41,7 @@ class PqpEnvironment {
                  const std::string& dh_table_file,
                  const std::string& obstacles_model_file,
                  RandomSpaceGeneratorInterface* random_generator,
-                 const int sample_space_size = 1000000);
+                 const int sample_space_size = 10000);
 
   int sample_space_size() { return conf_sample_space_->size(); }
   int dimension() { return dimension_; }
@@ -55,12 +55,14 @@ class PqpEnvironment {
     std::shared_ptr<Bubble>& bubble);
   // Performs distance query - returns smallest distance to obstacles
   double DistanceQuery(EVectorXd& q);
+  // Performs collision check - returns false upon collision
+  bool CollisionQuery(EVectorXd& q);
   // Knn query - returns indices
   std::vector<int> KnnQuery(EVectorXd& q, int k);
 
  private:
   const double kCylinderRadius = 1000.0;
-  const double kMinDistanceToObstacles = 0.01;
+  const double kMinDistanceToObstacles = 0.1;
 
   bool LoadRobotModel(const std::vector<std::string>& robot_mode_files);
   bool LoadRobotParameters(const std::string& parameters_file);
