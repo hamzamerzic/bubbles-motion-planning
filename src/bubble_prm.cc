@@ -163,8 +163,7 @@ bool BubblePrm::BuildTree() {
     }
   }
 
-  if (bubbles_.at(end_index_) != nullptr &&
-      bubbles_.at(end_index_)->parent() != nullptr) {
+  if (bubbles_.at(end_index_)->parent() != nullptr) {
     std::cout << "Tree successsfully built!" << std::endl;
     return true;
   } else {
