@@ -51,7 +51,9 @@ class LazyPrm : PrmTree {
             double collision_limit = 0.01  // Distance query overhead
             )
       : PrmTree(pqp_environment, start, end, knn_num),
-        step_size_(step_size), collision_limit_(collision_limit) {}
+        step_size_(step_size),  // interpolation step size
+        parents_(std::vector<int>(space_size_, -1)) // -1 => no parent
+        {}
 
   virtual bool ConnectPoints(int point1_index, int point2_index);
   virtual bool AddPointToTree(int point_index, double extra_weight = 0);
@@ -59,8 +61,8 @@ class LazyPrm : PrmTree {
   virtual void LogResults(const std::string& filename);
 
  private:
-  double step_size_, collision_limit_;
-  int max_connect_param_;
+  double step_size_;
+  std::vector<int> parents_;
   std::priority_queue<Edge, std::vector<Edge>, EdgeCompareFunctor> pq_;
 };
 
