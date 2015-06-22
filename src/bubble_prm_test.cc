@@ -82,7 +82,7 @@ BOOST_AUTO_TEST_CASE(build) {
       "models/abb-irb-120/5link.stl", "models/abb-irb-120/6link.stl"},
       "models/abb-irb-120/parameters.txt",
       "models/environment/obstacles_trivial.stl",
-      generator.release(), 5000));
+      generator.release(), 1000));
   EVectorXd start (6); start << -0.7330382858,   // -42
                                 -0.5235987756,   // -30
                                 -0.03490658504,  // -2
@@ -98,7 +98,7 @@ BOOST_AUTO_TEST_CASE(build) {
 
   BubblePrm bubble_prm (pqp.release(), start, end, 20);
   BOOST_CHECK_EQUAL(bubble_prm.BuildTree(), true);
-  bubble_prm.LogResults("RDKScript.py");
+  bubble_prm.LogResults("bubble_rdk_trivial.py");
 }
 
 
@@ -134,7 +134,7 @@ BOOST_AUTO_TEST_CASE(build1) {
 
   BubblePrm bubble_prm (pqp.release(), start, end, 20);
   BOOST_CHECK_EQUAL(bubble_prm.BuildTree(), true);
-  bubble_prm.LogResults("RDKScript1.py");
+  bubble_prm.LogResults("bubble_rdk_easy.py");
 }
 
 BOOST_AUTO_TEST_CASE(build2) {
@@ -169,7 +169,7 @@ BOOST_AUTO_TEST_CASE(build2) {
 
   BubblePrm bubble_prm (pqp.release(), start, end, 100);
   BOOST_CHECK_EQUAL(bubble_prm.BuildTree(), true);
-  bubble_prm.LogResults("RDKScript2.py");
+  bubble_prm.LogResults("bubble_rd_hard.py");
 }
 
 BOOST_AUTO_TEST_CASE(build3) {
@@ -204,7 +204,7 @@ BOOST_AUTO_TEST_CASE(build3) {
 
   BubblePrm bubble_prm (pqp.release(), start, end, 100);
   BOOST_CHECK_EQUAL(bubble_prm.BuildTree(), true);
-  bubble_prm.LogResults("RDKScript3.py");
+  bubble_prm.LogResults("bubble_rdk_hard2.py");
 }
 
 BOOST_AUTO_TEST_CASE(build4) {
