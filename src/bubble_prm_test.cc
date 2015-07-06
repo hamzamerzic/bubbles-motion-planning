@@ -22,6 +22,7 @@
 #include <vector>
 #include <memory>
 #include <cmath>
+#include <chrono>
 #include <iostream>
 
 #include "environment/pqp_environment.h"
@@ -67,6 +68,7 @@ BOOST_AUTO_TEST_CASE(hull2) {
 }
 
 BOOST_AUTO_TEST_CASE(build) {
+  auto start_t = std::chrono::steady_clock::now();
   std::vector<std::pair<double, double>> limits;
   limits.emplace_back(-2.879793266, 2.879793266);
   limits.emplace_back(-1.919862177, 1.919862177);
@@ -98,11 +100,17 @@ BOOST_AUTO_TEST_CASE(build) {
 
   BubblePrm bubble_prm (pqp.release(), start, end, 20);
   BOOST_CHECK_EQUAL(bubble_prm.BuildTree(), true);
+  auto end_t = std::chrono::steady_clock::now();
+  auto duration = end_t - start_t;
+  std::cout << ">>>>Duration: " <<
+    std::chrono::duration <double, std::milli> (duration).count() << " ms" <<
+    std::endl;
   bubble_prm.LogResults("bubble_rdk_trivial.py");
 }
 
 
 BOOST_AUTO_TEST_CASE(build1) {
+  auto start_t = std::chrono::steady_clock::now();
   std::vector<std::pair<double, double>> limits;
   limits.emplace_back(-2.879793266, 2.879793266);
   limits.emplace_back(-1.919862177, 1.919862177);
@@ -134,10 +142,16 @@ BOOST_AUTO_TEST_CASE(build1) {
 
   BubblePrm bubble_prm (pqp.release(), start, end, 20);
   BOOST_CHECK_EQUAL(bubble_prm.BuildTree(), true);
+  auto end_t = std::chrono::steady_clock::now();
+  auto duration = end_t - start_t;
+  std::cout << ">>>>Duration: " <<
+    std::chrono::duration <double, std::milli> (duration).count() << " ms" <<
+    std::endl;
   bubble_prm.LogResults("bubble_rdk_easy.py");
 }
 
 BOOST_AUTO_TEST_CASE(build2) {
+  auto start_t = std::chrono::steady_clock::now();
   std::vector<std::pair<double, double>> limits;
   limits.emplace_back(-2.879793266, 2.879793266);
   limits.emplace_back(-1.919862177, 1.919862177);
@@ -169,10 +183,16 @@ BOOST_AUTO_TEST_CASE(build2) {
 
   BubblePrm bubble_prm (pqp.release(), start, end, 100);
   BOOST_CHECK_EQUAL(bubble_prm.BuildTree(), true);
+  auto end_t = std::chrono::steady_clock::now();
+  auto duration = end_t - start_t;
+  std::cout << ">>>>Duration: " <<
+    std::chrono::duration <double, std::milli> (duration).count() << " ms" <<
+    std::endl;
   bubble_prm.LogResults("bubble_rd_hard.py");
 }
 
 BOOST_AUTO_TEST_CASE(build3) {
+  auto start_t = std::chrono::steady_clock::now();
   std::vector<std::pair<double, double>> limits;
   limits.emplace_back(-2.879793266, 2.879793266);
   limits.emplace_back(-1.919862177, 1.919862177);
@@ -204,6 +224,11 @@ BOOST_AUTO_TEST_CASE(build3) {
 
   BubblePrm bubble_prm (pqp.release(), start, end, 100);
   BOOST_CHECK_EQUAL(bubble_prm.BuildTree(), true);
+  auto end_t = std::chrono::steady_clock::now();
+  auto duration = end_t - start_t;
+  std::cout << ">>>>Duration: " <<
+    std::chrono::duration <double, std::milli> (duration).count() << " ms" <<
+    std::endl;
   bubble_prm.LogResults("bubble_rdk_hard2.py");
 }
 

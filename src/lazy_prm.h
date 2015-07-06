@@ -47,7 +47,7 @@ class LazyPrm : PrmTree {
   typedef Eigen::VectorXd EVectorXd;
   LazyPrm(PqpEnvironment* pqp_environment, EVectorXd& start, EVectorXd& end,
             int knn_num,  // Number of nearest neighbors
-            double step_size = 0.001, // Interpolation step size
+            double step_size = 0.01, // Interpolation step size
             double collision_limit = 0.01  // Distance query overhead
             )
       : PrmTree(pqp_environment, start, end, knn_num),
