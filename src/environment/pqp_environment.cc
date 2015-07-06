@@ -22,7 +22,6 @@
 #include <sstream>
 #include <string>
 #include <algorithm>
-#include <iostream>
 
 PqpEnvironment::PqpEnvironment(const std::vector<std::string>&
                                    robot_model_files,
@@ -42,14 +41,12 @@ PqpEnvironment::PqpEnvironment(const std::vector<std::string>&
   try {
     cylinder_ = std::unique_ptr<PQP_Model>(parser_.GetModel("cylinder.stl"));
   } catch(std::string& s) {
-    std::cout << s;
     throw s;
   }
 }
 
 bool PqpEnvironment::LoadRobotModel(
       const std::vector<std::string>& robot_model_files) {
-  std::cout << "Loading robot model... ";
   try {
     EMatrix R = EMatrix::Identity();
     EVector3f T (0.0, 0.0, 0.0);
@@ -61,7 +58,6 @@ bool PqpEnvironment::LoadRobotModel(
       segments_.emplace_back(parser_.GetTransformModel(model_file, R, T));
     }
 
-    std::cout << "Robot model successfully loaded!" << std::endl;
     return true;
   } catch (...) {
     throw;
@@ -72,7 +68,6 @@ bool PqpEnvironment::LoadRobotModel(
 // TODO(hamza): Add limits parsing
 bool PqpEnvironment::LoadRobotParameters(const std::string& parameters_file) {
   std::ifstream input_file (parameters_file.c_str());
-  std::cout << "Loading robot parameters... ";
   if (input_file) {
     try {
       input_file.seekg(0, std::ios::end);            // End of file
@@ -92,7 +87,6 @@ bool PqpEnvironment::LoadRobotParameters(const std::string& parameters_file) {
         dh_table_.emplace_back(theta, d, a, alpha);
       }
 
-      std::cout << "Robot parameters successfully loaded!" << std::endl;
       return true;
     }
     catch(...) {
@@ -103,12 +97,10 @@ bool PqpEnvironment::LoadRobotParameters(const std::string& parameters_file) {
 }
 
 bool PqpEnvironment::LoadObstacles(const std::string& obstacles_model_file) {
-  std::cout << "Loading obstacles model... ";
   try {
     obstacles_ = std::unique_ptr<PQP_Model>(
       parser_.GetModel(obstacles_model_file));
 
-    std::cout << "Obstacles model successfully loaded!" << std::endl;
     return true;
   }
   catch (...) {
@@ -120,7 +112,6 @@ bool PqpEnvironment::LoadObstacles(const std::string& obstacles_model_file) {
 bool PqpEnvironment::GenerateSampleSpace(
     RandomSpaceGeneratorInterface* random_generator,
     const int sample_space_size) {
-  std::cout << "Generating sample space... ";
   try {
     // Create configuration sample space
     conf_sample_space_ = std::unique_ptr<FlannPointArray> (new FlannPointArray (
@@ -130,7 +121,6 @@ bool PqpEnvironment::GenerateSampleSpace(
         flann::KDTreeIndexParams(4)));
     conf_sample_space_->buildIndex();
 
-    std::cout << "Sample space successfully generated!" << std::endl;
     return true;
   } catch (...) {
     return false;

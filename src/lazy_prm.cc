@@ -20,6 +20,7 @@
 #include <queue>
 #include <fstream>
 #include <iostream>
+#include <chrono>
 
 bool LazyPrm::ConnectPoints(int point1_index, int point2_index) {
   EVectorXd point1 = GetCoordinates(point1_index),
@@ -67,8 +68,8 @@ bool LazyPrm::AddPointToTree(int point_index, double extra_weight) {
   return true;
 }
 
-bool LazyPrm::BuildTree() {
-  std::cout << "*****Build started.*****" << std::endl;
+bool LazyPrm::BuildTree(const std::string& log_filename) {
+  std::cout << "**********BUILD STARTED**********" << std::endl;
   EVectorXd start_coordinates = GetCoordinates(start_index_),
             end_coordinates = GetCoordinates(end_index_);
   if (!pqp_environment_->CollisionQuery(start_coordinates)) {
@@ -80,32 +81,44 @@ bool LazyPrm::BuildTree() {
     return false;
   }
 
-  AddPointToTree(start_index_);
-  std::cout << "Added initial point to tree!" << std::endl;
+  std::ofstream log (log_filename);
 
-  int counter = 1;
+  auto start_t = std::chrono::steady_clock::now();
+  AddPointToTree(start_index_);
+  auto end_t = std::chrono::steady_clock::now();
+  auto duration = end_t - start_t;
+  log << std::chrono::duration<double, std::milli> (duration).count() <<
+      std::endl;
+
   while (!pq_.empty() && !visited_.at(end_index_)) {
     Edge temp = pq_.top(); pq_.pop();
-    std::cout << "Current point weight: " << temp.weight << std::endl;
-    std::cout << "Current q size: " << pq_.size() << std::endl;
     if (visited_.at(temp.point2_index))
       continue;
-    if (ConnectPoints(temp.point1_index, temp.point2_index)) {
+
+    start_t = std::chrono::steady_clock::now();
+    if (ConnectPoints(temp.point1_index, temp.point2_index))
       AddPointToTree(temp.point2_index, temp.extra_weight);
-      std::cout << "ADDED POINT TO TREE! " << counter++ << std::endl;
-    }
+
+    end_t = std::chrono::steady_clock::now();
+    duration = end_t - start_t;
+    log << std::chrono::duration<double, std::milli> (duration).count() <<
+        std::endl;
   }
 
   if (parents_.at(end_index_) != -1) {
-    std::cout << "Tree successsfully built!" << std::endl;
+    std::cout << "**********BUILD SUCCESSFULL**********" << std::endl;
+    std::cout << "Current q size: " << pq_.size() << std::endl;
+    log << 1 << " " << pq_.size();
     return true;
   } else {
-    std::cout << "Building tree unsucessful!" << std::endl;
+    std::cout << "**********BUILD UNSUCCESSFULL**********" << std::endl;
+    std::cout << "Current q size: " << pq_.size() << std::endl;
+    log << 0 << " " << pq_.size();
     return false;
   }
 }
 
-void LazyPrm::LogResults(const std::string& filename) {
+void LazyPrm::GeneratePath(const std::string& filename) {
   auto trajectory_it = parents_.at(end_index_);
   if (trajectory_it == -1) {
     std::cout << "Trajectory writing unsuccessful!" << std::endl;
@@ -146,5 +159,6 @@ void LazyPrm::LogResults(const std::string& filename) {
     file << (*it)[it->size() - 1] << "])" << std::endl;
   }
 
-  std::cout << "Trajectory successfully written!" << std::endl;
+  std::cout << "Trajectory successfully written!" << std::endl <<
+               "--------------------------------" << std::endl << std::endl;
 }

@@ -99,13 +99,13 @@ BOOST_AUTO_TEST_CASE(build) {
                            -0.5235987756;  // -30
 
   BubblePrm bubble_prm (pqp.release(), start, end, 20);
-  BOOST_CHECK_EQUAL(bubble_prm.BuildTree(), true);
+  BOOST_CHECK_EQUAL(bubble_prm.BuildTree("bubble_trivial"), true);
   auto end_t = std::chrono::steady_clock::now();
   auto duration = end_t - start_t;
-  std::cout << ">>>>Duration: " <<
+  std::cout << "Elapsed time: " <<
     std::chrono::duration <double, std::milli> (duration).count() << " ms" <<
     std::endl;
-  bubble_prm.LogResults("bubble_rdk_trivial.py");
+  bubble_prm.GeneratePath("bubble_rdk_trivial.py");
 }
 
 
@@ -141,13 +141,13 @@ BOOST_AUTO_TEST_CASE(build1) {
                             -2.35619449;   // -135
 
   BubblePrm bubble_prm (pqp.release(), start, end, 20);
-  BOOST_CHECK_EQUAL(bubble_prm.BuildTree(), true);
+  BOOST_CHECK_EQUAL(bubble_prm.BuildTree("bubble_easy"), true);
   auto end_t = std::chrono::steady_clock::now();
   auto duration = end_t - start_t;
-  std::cout << ">>>>Duration: " <<
+  std::cout << "Elapsed time: " <<
     std::chrono::duration <double, std::milli> (duration).count() << " ms" <<
     std::endl;
-  bubble_prm.LogResults("bubble_rdk_easy.py");
+  bubble_prm.GeneratePath("bubble_rdk_easy.py");
 }
 
 BOOST_AUTO_TEST_CASE(build2) {
@@ -182,13 +182,13 @@ BOOST_AUTO_TEST_CASE(build2) {
                             3.839724354;   // 220
 
   BubblePrm bubble_prm (pqp.release(), start, end, 100);
-  BOOST_CHECK_EQUAL(bubble_prm.BuildTree(), true);
+  BOOST_CHECK_EQUAL(bubble_prm.BuildTree("bubble_hard"), true);
   auto end_t = std::chrono::steady_clock::now();
   auto duration = end_t - start_t;
-  std::cout << ">>>>Duration: " <<
+  std::cout << "Elapsed time: " <<
     std::chrono::duration <double, std::milli> (duration).count() << " ms" <<
     std::endl;
-  bubble_prm.LogResults("bubble_rd_hard.py");
+  bubble_prm.GeneratePath("bubble_rdk_hard.py");
 }
 
 BOOST_AUTO_TEST_CASE(build3) {
@@ -223,16 +223,16 @@ BOOST_AUTO_TEST_CASE(build3) {
                             -4.36332313;    // -250
 
   BubblePrm bubble_prm (pqp.release(), start, end, 100);
-  BOOST_CHECK_EQUAL(bubble_prm.BuildTree(), true);
+  BOOST_CHECK_EQUAL(bubble_prm.BuildTree("bubble_hard2"), true);
   auto end_t = std::chrono::steady_clock::now();
   auto duration = end_t - start_t;
-  std::cout << ">>>>Duration: " <<
+  std::cout << "Elapsed time: " <<
     std::chrono::duration <double, std::milli> (duration).count() << " ms" <<
     std::endl;
-  bubble_prm.LogResults("bubble_rdk_hard2.py");
+  bubble_prm.GeneratePath("bubble_rdk_hard2.py");
 }
 
-BOOST_AUTO_TEST_CASE(build4) {
+BOOST_AUTO_TEST_CASE(initialcol4) {
   std::vector<std::pair<double, double>> limits;
   limits.emplace_back(-2.879793266, 2.879793266);
   limits.emplace_back(-1.919862177, 1.919862177);
@@ -263,10 +263,10 @@ BOOST_AUTO_TEST_CASE(build4) {
                             -2.35619449;
 
   BubblePrm bubble_prm (pqp.release(), start, end, 15);
-  BOOST_CHECK_EQUAL(bubble_prm.BuildTree(), false);
+  BOOST_CHECK_EQUAL(bubble_prm.BuildTree("bubble_col4"), false);
 }
 
-BOOST_AUTO_TEST_CASE(build5) {
+BOOST_AUTO_TEST_CASE(finalcol5) {
   std::vector<std::pair<double, double>> limits;
   limits.emplace_back(-2.879793266, 2.879793266);
   limits.emplace_back(-1.919862177, 1.919862177);
@@ -298,10 +298,10 @@ BOOST_AUTO_TEST_CASE(build5) {
                             0.0;
 
   BubblePrm bubble_prm (pqp.release(), start, end, 15);
-  BOOST_CHECK_EQUAL(bubble_prm.BuildTree(), false);
+  BOOST_CHECK_EQUAL(bubble_prm.BuildTree("bubble_col5"), false);
 }
 
-BOOST_AUTO_TEST_CASE(build6) {
+BOOST_AUTO_TEST_CASE(initialcol6) {
   std::vector<std::pair<double, double>> limits;
   limits.emplace_back(-2.879793266, 2.879793266);
   limits.emplace_back(-1.919862177, 1.919862177);
@@ -332,5 +332,5 @@ BOOST_AUTO_TEST_CASE(build6) {
                             -2.35619449;
 
   BubblePrm bubble_prm (pqp.release(), start, end, 15);
-  BOOST_CHECK_EQUAL(bubble_prm.BuildTree(), false);
+  BOOST_CHECK_EQUAL(bubble_prm.BuildTree("bubble_col6"), false);
 }

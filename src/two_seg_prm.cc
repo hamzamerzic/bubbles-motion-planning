@@ -54,7 +54,7 @@ bool TwoSegPrm::AddPointToTree(int point_index, double extra_weight) {
   return true;
 }
 
-bool TwoSegPrm::BuildTree() {
+bool TwoSegPrm::BuildTree(const std::string& log_filename) {
   pq_.push(Edge(start_index_, (end_ - start_).norm()));
   parents_.at(start_index_) = start_index_;
 
@@ -66,7 +66,7 @@ bool TwoSegPrm::BuildTree() {
   throw "Empty!";
 }
 
-void TwoSegPrm::LogResults(const std::string& filename) {
+void TwoSegPrm::GeneratePath(const std::string& filename) {
   std::ostream *out;
   if (filename == "")
     out = &std::cout;
