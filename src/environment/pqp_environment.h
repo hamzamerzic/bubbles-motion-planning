@@ -61,6 +61,7 @@ class PqpEnvironment {
   bool CollisionQuery(EVectorXd& q);
   // Knn query - returns indices
   std::vector<int> KnnQuery(EVectorXd& q, int k);
+  size_t CreatedBubbles() { return bubble_counter_; }
 
  private:
   const double kCylinderRadius = 1000.0;
@@ -79,6 +80,7 @@ class PqpEnvironment {
   ModelParser parser_;
   std::unique_ptr<FlannPointArray> conf_sample_space_;
   int sample_space_size_;
+  size_t bubble_counter_;
   size_t dimension_;
   // Cylinder needed for generating bubbles
   std::unique_ptr<PQP_Model> cylinder_;
