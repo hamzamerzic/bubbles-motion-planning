@@ -47,8 +47,8 @@ class LazyPrm : PrmTree {
   typedef Eigen::VectorXd EVectorXd;
   LazyPrm(PqpEnvironment* pqp_environment, EVectorXd& start, EVectorXd& end,
             int knn_num,  // Number of nearest neighbors
-            double step_size = 0.01, // Interpolation step size
-            double collision_limit = 0.01  // Distance query overhead
+            double step_size = 0.005, // Interpolation step size
+            double collision_limit = 0.005  // Distance query overhead
             )
       : PrmTree(pqp_environment, start, end, knn_num),
         step_size_(step_size),  // interpolation step size
@@ -57,8 +57,8 @@ class LazyPrm : PrmTree {
 
   virtual bool ConnectPoints(int point1_index, int point2_index);
   virtual bool AddPointToTree(int point_index, double extra_weight = 0);
-  virtual bool BuildTree();
-  virtual void LogResults(const std::string& filename);
+  virtual bool BuildTree(const std::string& log_filename);
+  virtual void GeneratePath(const std::string& filename);
 
  private:
   double step_size_;

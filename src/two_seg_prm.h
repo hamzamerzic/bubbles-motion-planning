@@ -50,8 +50,8 @@ class TwoSegPrm : PrmTree {
 
   virtual bool ConnectPoints(int point1_index, int point2_index);
   virtual bool AddPointToTree(int point_index, double extra_weight = 0);
-  virtual bool BuildTree();
-  virtual void LogResults(const std::string& filename = "");
+  virtual bool BuildTree(const std::string& log_filename);
+  virtual void GeneratePath(const std::string& filename = "");
 
   EVectorXd GetPoint(int point_index);
   int InsertPoint(EVectorXd& point);

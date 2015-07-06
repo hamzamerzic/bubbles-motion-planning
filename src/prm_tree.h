@@ -41,8 +41,8 @@ class PrmTree {
   }
   virtual bool ConnectPoints(int point1_index, int point2_index) = 0;
   virtual bool AddPointToTree(int point_index, double extra_weight) = 0;
-  virtual bool BuildTree() = 0;
-  virtual void LogResults(const std::string& filename) = 0;
+  virtual bool BuildTree(const std::string& log_filename) = 0;
+  virtual void GeneratePath(const std::string& filename) = 0;
 
  protected:
   std::unique_ptr<PqpEnvironment> pqp_environment_;
