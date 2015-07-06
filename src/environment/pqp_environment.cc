@@ -22,7 +22,6 @@
 #include <sstream>
 #include <string>
 #include <algorithm>
-#include <iostream>
 
 PqpEnvironment::PqpEnvironment(const std::vector<std::string>&
                                    robot_model_files,
@@ -39,29 +38,30 @@ PqpEnvironment::PqpEnvironment(const std::vector<std::string>&
     throw "Sample space not generated!";
 
   dimension_ = segments_.size();
-  try {
-    cylinder_ = std::unique_ptr<PQP_Model>(parser_.GetModel("cylinder.stl"));
-  } catch(std::string& s) {
-    std::cout << s;
-    throw s;
-  }
 }
 
 bool PqpEnvironment::LoadRobotModel(
       const std::vector<std::string>& robot_model_files) {
-  std::cout << "Loading robot model... ";
   try {
     EMatrix R = EMatrix::Identity();
     EVector3f T (0.0, 0.0, 0.0);
 
+    int segments_index = 0;
     for (const auto& model_file : robot_model_files) {
-      if (segments_.size() >= 1)
-        dh_table_[segments_.size() - 1].InverseTransform(R, T);
+      if (segments_index >= 1)
+        dh_table_[segments_index - 1].InverseTransform(R, T);
 
-      segments_.emplace_back(parser_.GetTransformModel(model_file, R, T));
+
+      double axis_length, radius;
+      EVector3f axis = dh_table_[segments_index].translation();
+      axis.normalize();
+
+      segments_.emplace_back(parser_.GetTransformModel(model_file, R, T,
+          axis, &axis_length, &radius));
+      capsules_.emplace_back(axis * axis_length, radius);
+      ++segments_index;
     }
 
-    std::cout << "Robot model successfully loaded!" << std::endl;
     return true;
   } catch (...) {
     throw;
@@ -72,7 +72,6 @@ bool PqpEnvironment::LoadRobotModel(
 // TODO(hamza): Add limits parsing
 bool PqpEnvironment::LoadRobotParameters(const std::string& parameters_file) {
   std::ifstream input_file (parameters_file.c_str());
-  std::cout << "Loading robot parameters... ";
   if (input_file) {
     try {
       input_file.seekg(0, std::ios::end);            // End of file
@@ -92,7 +91,6 @@ bool PqpEnvironment::LoadRobotParameters(const std::string& parameters_file) {
         dh_table_.emplace_back(theta, d, a, alpha);
       }
 
-      std::cout << "Robot parameters successfully loaded!" << std::endl;
       return true;
     }
     catch(...) {
@@ -103,12 +101,10 @@ bool PqpEnvironment::LoadRobotParameters(const std::string& parameters_file) {
 }
 
 bool PqpEnvironment::LoadObstacles(const std::string& obstacles_model_file) {
-  std::cout << "Loading obstacles model... ";
   try {
     obstacles_ = std::unique_ptr<PQP_Model>(
       parser_.GetModel(obstacles_model_file));
 
-    std::cout << "Obstacles model successfully loaded!" << std::endl;
     return true;
   }
   catch (...) {
@@ -120,7 +116,6 @@ bool PqpEnvironment::LoadObstacles(const std::string& obstacles_model_file) {
 bool PqpEnvironment::GenerateSampleSpace(
     RandomSpaceGeneratorInterface* random_generator,
     const int sample_space_size) {
-  std::cout << "Generating sample space... ";
   try {
     // Create configuration sample space
     conf_sample_space_ = std::unique_ptr<FlannPointArray> (new FlannPointArray (
@@ -130,7 +125,6 @@ bool PqpEnvironment::GenerateSampleSpace(
         flann::KDTreeIndexParams(4)));
     conf_sample_space_->buildIndex();
 
-    std::cout << "Sample space successfully generated!" << std::endl;
     return true;
   } catch (...) {
     return false;
@@ -148,7 +142,6 @@ void PqpEnvironment::RemovePoint(int point_index) {
 
 bool PqpEnvironment::MakeBubble(const EVectorXd& coordinates,
     std::shared_ptr<Bubble>& bubble) {
-
   ++bubble_counter_;
   EMatrix R = EMatrix::Identity();
   EVector3f T (0.0, 0.0, 0.0);
@@ -159,10 +152,10 @@ bool PqpEnvironment::MakeBubble(const EVectorXd& coordinates,
   PQP_DistanceResult distance_res;
   bubble = std::shared_ptr<Bubble>(new Bubble(coordinates));
 
-  // Defining effective radius for amortizing the resolution of the 3D cylinder
-  // model
-  double effective_radius = kCylinderRadius - 1.204543795;
   double axis_distance = 0;
+
+  EVector3f endpoint, prev_endpoint;
+  prev_endpoint.setZero();
 
   // Finding minimal distance to obstacles and updating bubble's first
   // dimension
@@ -180,13 +173,13 @@ bool PqpEnvironment::MakeBubble(const EVectorXd& coordinates,
     if (distance_res.Distance() < bubble->distance())
       bubble->distance() = distance_res.Distance();
 
-    PQP_Distance(&distance_res, reinterpret_cast<PQP_REAL(*)[3]>(R.data()),
-        T.data(), segments_.at(i).get(),
-        reinterpret_cast<PQP_REAL(*)[3]>(R_temp.data()), T_temp.data(),
-        cylinder_.get(), 0.0, 0.0);
+    endpoint = T + R * capsules_[i].first;
+    axis_distance = std::max(axis_distance, capsules_[i].second +
+        std::max(sqrt(endpoint(0) * endpoint(0) + endpoint(1) * endpoint(1)),
+          sqrt(prev_endpoint(0) * prev_endpoint(0) +
+            prev_endpoint(1) * prev_endpoint(1))));
+    prev_endpoint = endpoint;
 
-    if (effective_radius - distance_res.Distance() > axis_distance)
-      axis_distance = effective_radius - distance_res.Distance();
     dh_table_.at(i).Transform(R, T);
   }
 
@@ -198,14 +191,18 @@ bool PqpEnvironment::MakeBubble(const EVectorXd& coordinates,
     dh_table_.at(i - 1).Transform(R_temp, T_temp);
     R = R_temp;
     T = T_temp;
+    axis_distance = 0.0;
+    prev_endpoint.setZero();
     for (size_t k = i; k < dimension_; ++k) {
       R = R * Eigen::AngleAxisf(coordinates[k], EVector::UnitZ());
-      PQP_Distance(&distance_res, reinterpret_cast<PQP_REAL(*)[3]>(R.data()),
-          T.data(), segments_.at(k).get(),
-          reinterpret_cast<PQP_REAL(*)[3]>(R_temp.data()), T_temp.data(),
-          cylinder_.get(), 0.0, 0.0);
 
-      axis_distance = effective_radius - distance_res.Distance();
+      endpoint = T + R * capsules_[i].first;
+
+      axis_distance = std::max(axis_distance, capsules_[i].second +
+        std::max(sqrt(endpoint(0) * endpoint(0) + endpoint(1) * endpoint(1)),
+          sqrt(prev_endpoint(0) * prev_endpoint(0) +
+            prev_endpoint(1) * prev_endpoint(1))));
+      prev_endpoint = endpoint;
       if (bubble->distance() / axis_distance < bubble->GetDimension(i)) {
         bubble->SetDimension(i, bubble->distance() / axis_distance);
       }

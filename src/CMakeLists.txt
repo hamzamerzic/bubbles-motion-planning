@@ -25,8 +25,6 @@ add_executable(main main.cc)
 target_link_libraries(main
                       PQP)
 
-configure_file(cylinder.stl cylinder.stl COPYONLY)
-
 #Tests
 add_executable(dh_parameter_test dh_parameter_test.cc)
 target_link_libraries(dh_parameter_test

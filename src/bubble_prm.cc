@@ -20,6 +20,7 @@
 #include <queue>
 #include <fstream>
 #include <iostream>
+#include <chrono>
 
 struct QueueConnectorBubbleContainer {
   QueueConnectorBubbleContainer(const std::shared_ptr<Bubble>& bubble1,
@@ -41,12 +42,7 @@ void PrintPoint(const BubblePrm::EVectorXd& vec) {
 }
 
 bool BubblePrm::ConnectPoints(int point1_index, int point2_index) {
-  std::shared_ptr<Bubble> b1 = bubbles_.at(point1_index), /*b2;
-  if (bubbles_.at(point2_index) == nullptr && !pqp_environment_->MakeBubble(
-        GetCoordinates(point2_index), bubbles_.at(point2_index))) {
-    visited_.at(point2_index) = true;
-    return false;
-  }*/
+  std::shared_ptr<Bubble> b1 = bubbles_.at(point1_index),
                           b2 = bubbles_.at(point2_index);
 
   // Bubble intersections are stored, because they can be computed only once,
@@ -73,6 +69,7 @@ bool BubblePrm::ConnectPoints(int point1_index, int point2_index) {
     EVectorXd mid_coordinates =
         (q_edge.hull_intersect1 + q_edge.hull_intersect2) / 2;
     std::shared_ptr<Bubble> mid_bubble;
+
     if (!pqp_environment_->MakeBubble(mid_coordinates, mid_bubble)) {
       b2->parent().reset();  // Still no parents
       return false;
@@ -95,11 +92,10 @@ bool BubblePrm::ConnectPoints(int point1_index, int point2_index) {
     }
   }
   if (counter >= max_connect_param_) {
-    std::cout << "Not connected!" << std::endl;
     b2->parent().reset();
     return false;
   }
-  return true;
+   return true;
 }
 
 bool BubblePrm::AddPointToTree(int point_index, double extra_weight) {
@@ -137,8 +133,8 @@ bool BubblePrm::AddPointToTree(int point_index, double extra_weight) {
   return true;
 }
 
-bool BubblePrm::BuildTree() {
-  std::cout << "*****Build started.*****" << std::endl;
+bool BubblePrm::BuildTree(const std::string& log_filename) {
+  std::cout << "**********BUILD STARTED**********" << std::endl;
   if (!pqp_environment_->MakeBubble(start_, bubbles_.at(start_index_))) {
     std::cout << "Collision at the initial configuration!" << std::endl;
     return false;
@@ -149,36 +145,48 @@ bool BubblePrm::BuildTree() {
   }
   bubbles_.at(end_index_).reset();
 
-  AddPointToTree(start_index_);
-  std::cout << "Added initial point to tree!" << std::endl;
+  std::ofstream log (log_filename);
 
-  int counter = 1;
+  auto start_t = std::chrono::steady_clock::now();
+  AddPointToTree(start_index_);
+  auto end_t = std::chrono::steady_clock::now();
+  auto duration = end_t - start_t;
+  log << std::chrono::duration<double, std::milli> (duration).count() <<
+      std::endl;
+
   while (!pq_.empty() && !visited_.at(end_index_)) {
     Edge temp = pq_.top(); pq_.pop();
-    std::cout << "Current point weight: " << temp.weight << std::endl;
-    std::cout << "Current q size: " << pq_.size() << std::endl;
     if (visited_.at(temp.point2_index))
       continue;
-    if (ConnectPoints(temp.point1_index, temp.point2_index)) {
+
+    start_t = std::chrono::steady_clock::now();
+    if (ConnectPoints(temp.point1_index, temp.point2_index))
       AddPointToTree(temp.point2_index, temp.extra_weight);
-      std::cout << "ADDED POINT TO TREE! " << counter++ << std::endl;
-    }
+
+    end_t = std::chrono::steady_clock::now();
+    duration = end_t - start_t;
+    log << std::chrono::duration<double, std::milli> (duration).count() <<
+        std::endl;
   }
 
   if (bubbles_.at(end_index_)->parent() != nullptr) {
-    std::cout << "Tree successsfully built!" << std::endl;
-    std::cout << pqp_environment_->CreatedBubbles() << " bubbles generated!" <<
+    std::cout << "**********BUILD SUCCESSFULL**********" << std::endl;
+    std::cout << "Bubbles generated: " << pqp_environment_->CreatedBubbles() <<
       std::endl;
+    std::cout << "Current q size: " << pq_.size() << std::endl;
+    log << 1 << " " << pqp_environment_->CreatedBubbles() << " " << pq_.size();
     return true;
   } else {
-    std::cout << "Building tree unsucessful!" << std::endl;
-    std::cout << pqp_environment_->CreatedBubbles() << " bubbles generated!" <<
+    std::cout << "**********BUILD UNSUCCESSFULL**********" << std::endl;
+    std::cout << "Bubbles generated: " << pqp_environment_->CreatedBubbles() <<
       std::endl;
+    std::cout << "Current q size: " << pq_.size() << std::endl;
+    log << 0 << " " << pqp_environment_->CreatedBubbles() << " " << pq_.size();
     return false;
   }
 }
 
-void BubblePrm::LogResults(const std::string& filename) {
+void BubblePrm::GeneratePath(const std::string& filename) {
   auto trajectory_it = bubbles_.at(end_index_);
   if (trajectory_it == nullptr) {
     std::cout << "Trajectory writing unsuccessful!" << std::endl;
@@ -218,5 +226,6 @@ void BubblePrm::LogResults(const std::string& filename) {
     file << (*it)[it->size() - 1] << "])" << std::endl;
   }
 
-  std::cout << "Trajectory successfully written!" << std::endl;
+  std::cout << "Trajectory successfully written!" << std::endl <<
+               "--------------------------------" << std::endl << std::endl;
 }

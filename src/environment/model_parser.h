@@ -28,7 +28,9 @@ class ModelParser {
  public:
   ModelParser() {}
   PQP_Model* GetTransformModel(const std::string& model_file,
-                             const EMatrix& R, const EVector3f& T);
+                               const EMatrix& R, const EVector3f& T,
+                               const EVector3f& axis, double* axis_length,
+                               double* radius);
   PQP_Model* GetModel(const std::string& model_file);
   // TODO(hamza): Add robot parameters getter
 };

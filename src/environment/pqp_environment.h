@@ -64,7 +64,6 @@ class PqpEnvironment {
   size_t CreatedBubbles() { return bubble_counter_; }
 
  private:
-  const double kCylinderRadius = 1000.0;
   const double kMinDistanceToObstacles = 0.1;
 
   bool LoadRobotModel(const std::vector<std::string>& robot_mode_files);
@@ -82,8 +81,7 @@ class PqpEnvironment {
   int sample_space_size_;
   size_t bubble_counter_;
   size_t dimension_;
-  // Cylinder needed for generating bubbles
-  std::unique_ptr<PQP_Model> cylinder_;
+  std::vector<std::pair<EVector3f, double>> capsules_;
 };
 
 #endif  // PQP_ENVIRONMENT_H_INCLUDED
