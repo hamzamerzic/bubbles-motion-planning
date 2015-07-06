@@ -70,6 +70,6 @@ BOOST_AUTO_TEST_CASE(connect1) {
   int qbegin_ind (two_seg_prm.InsertPoint(qbegin)),
     qend_ind (two_seg_prm.InsertPoint(qend));
   BOOST_CHECK_EQUAL(two_seg_prm.ConnectPoints(qbegin_ind, qend_ind), false);
-  BOOST_CHECK_EQUAL(two_seg_prm.BuildTree(), true);
-  two_seg_prm.LogResults();
+  BOOST_CHECK_EQUAL(two_seg_prm.BuildTree(""), true);
+  two_seg_prm.GeneratePath();
 }
