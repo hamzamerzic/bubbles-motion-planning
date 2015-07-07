@@ -89,7 +89,7 @@ bool BubblePrm::ConnectPoints(int point1_index, int point2_index) {
     b2->parent().reset();
     return false;
   }
-   return true;
+  return true;
 }
 
 bool BubblePrm::AddPointToTree(int point_index, double extra_weight) {
