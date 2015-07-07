@@ -34,14 +34,8 @@ struct QueueConnectorBubbleContainer {
   BubblePrm::EVectorXd hull_intersect1, hull_intersect2;
 };
 
-void PrintPoint(const BubblePrm::EVectorXd& vec) {
-  for (unsigned i = 0; i < vec.size(); ++i) {
-    std::cout << vec[i] << " ";
-  }
-  std::cout << std::endl;
-}
-
 bool BubblePrm::ConnectPoints(int point1_index, int point2_index) {
+  ++connects_;
   std::shared_ptr<Bubble> b1 = bubbles_.at(point1_index),
                           b2 = bubbles_.at(point2_index);
 
@@ -100,6 +94,7 @@ bool BubblePrm::ConnectPoints(int point1_index, int point2_index) {
 
 bool BubblePrm::AddPointToTree(int point_index, double extra_weight) {
   if (visited_.at(point_index)) return false;
+  ++adds_;
   visited_.at(point_index) = true;
   pqp_environment_->RemovePoint(point_index);
 
@@ -113,6 +108,7 @@ bool BubblePrm::AddPointToTree(int point_index, double extra_weight) {
       continue;
 
     EVectorXd query_cords = GetCoordinates(query_index);
+
     if (bubbles_.at(query_index) != nullptr ||
         pqp_environment_->MakeBubble(query_cords, bubbles_.at(query_index)))
       pq_.emplace(point_index, query_index,
@@ -154,7 +150,7 @@ bool BubblePrm::BuildTree(const std::string& log_filename) {
   log << std::chrono::duration<double, std::milli> (duration).count() <<
       std::endl;
 
-  while (!pq_.empty() && !visited_.at(end_index_)) {
+  while (!visited_.at(end_index_) && !pq_.empty()) {
     Edge temp = pq_.top(); pq_.pop();
     if (visited_.at(temp.point2_index))
       continue;
@@ -169,19 +165,23 @@ bool BubblePrm::BuildTree(const std::string& log_filename) {
         std::endl;
   }
 
-  if (bubbles_.at(end_index_)->parent() != nullptr) {
+  if (!pq_.empty() && bubbles_.at(end_index_)->parent() != nullptr) {
     std::cout << "**********BUILD SUCCESSFULL**********" << std::endl;
     std::cout << "Bubbles generated: " << pqp_environment_->CreatedBubbles() <<
       std::endl;
     std::cout << "Current q size: " << pq_.size() << std::endl;
-    log << 1 << " " << pqp_environment_->CreatedBubbles() << " " << pq_.size();
+    log << "Bubbles: " <<pqp_environment_->CreatedBubbles() << std::endl <<
+      "Connects: " << connects_ << std::endl << "Adds: " << adds_ <<
+      std::endl << "Q size: " << pq_.size() << std::endl << 1;
     return true;
   } else {
     std::cout << "**********BUILD UNSUCCESSFULL**********" << std::endl;
     std::cout << "Bubbles generated: " << pqp_environment_->CreatedBubbles() <<
       std::endl;
     std::cout << "Current q size: " << pq_.size() << std::endl;
-    log << 0 << " " << pqp_environment_->CreatedBubbles() << " " << pq_.size();
+    log << "Bubbles: " <<pqp_environment_->CreatedBubbles() << std::endl <<
+      "Connects: " << connects_ << std::endl << "Adds: " << adds_ <<
+      std::endl << "Q size: " << pq_.size() << std::endl << 0;
     return false;
   }
 }

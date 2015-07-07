@@ -30,7 +30,8 @@ PqpEnvironment::PqpEnvironment(const std::vector<std::string>&
                                RandomSpaceGeneratorInterface *random_generator,
                                const int sample_space_size)
     : obstacles_(new PQP_Model), conf_sample_space_(nullptr),
-      sample_space_size_(sample_space_size), bubble_counter_(0) {
+      sample_space_size_(sample_space_size), bubble_counter_(0),
+      collision_counter_(0) {
   if (!LoadRobotParameters(dh_table_file)) throw "DH table problem!";
   if (!LoadRobotModel(robot_model_files)) throw "Robot model problem!";
   if (!LoadObstacles(obstacles_model_file)) throw "Obstacles problem!";
@@ -241,6 +242,7 @@ double PqpEnvironment::DistanceQuery(EVectorXd& q) {
 }
 
 bool PqpEnvironment::CollisionQuery(EVectorXd& q) {
+  ++collision_counter_;
   EMatrix R = EMatrix::Identity();
   EVector3f T (0.0, 0.0, 0.0);
   // Static environment transform

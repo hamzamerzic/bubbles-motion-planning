@@ -52,7 +52,8 @@ class LazyPrm : PrmTree {
             )
       : PrmTree(pqp_environment, start, end, knn_num),
         step_size_(step_size),  // interpolation step size
-        parents_(std::vector<int>(space_size_, -1)) // -1 => no parent
+        parents_(std::vector<int>(space_size_, -1)), // -1 => no parent
+        connects_(0), adds_(0) // Logged parameters
         {}
 
   virtual bool ConnectPoints(int point1_index, int point2_index);
@@ -63,6 +64,7 @@ class LazyPrm : PrmTree {
  private:
   double step_size_;
   std::vector<int> parents_;
+  size_t connects_, adds_;
   std::priority_queue<Edge, std::vector<Edge>, EdgeCompareFunctor> pq_;
 };
 

@@ -51,7 +51,9 @@ class BubblePrm : PrmTree {
             int max_connect_param = 128  // Max binary splits for ConnectPoints
             )
       : PrmTree(pqp_environment, start, end, knn_num),
-        bubbles_(space_size_, nullptr), max_connect_param_(max_connect_param) {}
+        bubbles_(space_size_, nullptr), max_connect_param_(max_connect_param),
+        connects_(0), adds_(0) // Logged parameters
+        {}
 
   virtual bool ConnectPoints(int point1_index, int point2_index);
   virtual bool AddPointToTree(int point_index, double extra_weight = 0);
@@ -62,6 +64,7 @@ class BubblePrm : PrmTree {
   std::vector<std::shared_ptr<Bubble>> bubbles_;
   double step_size_, collision_limit_;
   int max_connect_param_;
+  size_t connects_, adds_;
   std::priority_queue<Edge, std::vector<Edge>, EdgeCompareFunctor> pq_;
 };
 

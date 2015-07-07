@@ -23,6 +23,7 @@
 #include <chrono>
 
 bool LazyPrm::ConnectPoints(int point1_index, int point2_index) {
+  ++connects_;
   EVectorXd point1 = GetCoordinates(point1_index),
             point2 = GetCoordinates(point2_index),
             direction = (point2 - point1).normalized();
@@ -40,6 +41,7 @@ bool LazyPrm::ConnectPoints(int point1_index, int point2_index) {
 
 bool LazyPrm::AddPointToTree(int point_index, double extra_weight) {
   if (visited_.at(point_index)) return false;
+  ++adds_;
   visited_.at(point_index) = true;
   pqp_environment_->RemovePoint(point_index);
 
@@ -107,13 +109,21 @@ bool LazyPrm::BuildTree(const std::string& log_filename) {
 
   if (parents_.at(end_index_) != -1) {
     std::cout << "**********BUILD SUCCESSFULL**********" << std::endl;
+    std::cout << "Collision checks: " << pqp_environment_->CollisionChecks() <<
+      std::endl;
     std::cout << "Current q size: " << pq_.size() << std::endl;
-    log << 1 << " " << pq_.size();
+    log << "Collision checks: " <<pqp_environment_->CollisionChecks() <<
+      std::endl << "Connects: " << connects_ << std::endl << "Adds: " <<
+      adds_ << std::endl << "Q size: " << pq_.size() << std::endl << 1;
     return true;
   } else {
     std::cout << "**********BUILD UNSUCCESSFULL**********" << std::endl;
+    std::cout << "Collision checks: " << pqp_environment_->CollisionChecks() <<
+      std::endl;
     std::cout << "Current q size: " << pq_.size() << std::endl;
-    log << 0 << " " << pq_.size();
+    log << "Collision checks: " <<pqp_environment_->CollisionChecks() <<
+      std::endl << "Connects: " << connects_ << std::endl << "Adds: " <<
+      adds_ << std::endl << "Q size: " << pq_.size() << std::endl << 0;
     return false;
   }
 }

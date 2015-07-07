@@ -62,6 +62,7 @@ class PqpEnvironment {
   // Knn query - returns indices
   std::vector<int> KnnQuery(EVectorXd& q, int k);
   size_t CreatedBubbles() { return bubble_counter_; }
+  size_t CollisionChecks() { return collision_counter_; }
 
  private:
   const double kMinDistanceToObstacles = 0.1;
@@ -79,7 +80,7 @@ class PqpEnvironment {
   ModelParser parser_;
   std::unique_ptr<FlannPointArray> conf_sample_space_;
   int sample_space_size_;
-  size_t bubble_counter_;
+  size_t bubble_counter_, collision_counter_;
   size_t dimension_;
   std::vector<std::pair<EVector3f, double>> capsules_;
 };
