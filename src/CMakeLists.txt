@@ -45,6 +45,7 @@ target_link_libraries(bubble_prm_test
                       bubble_prm
                       pqp_environment
                       naive_generator
+                      halton_generator
                       boost_unit_test_framework)
 add_test(BUBBLE_PRM_TEST ${CMAKE_CURRENT_BINARY_DIR}/bubble_prm_test)
 
@@ -53,5 +54,6 @@ target_link_libraries(lazy_prm_test
                       lazy_prm
                       pqp_environment
                       naive_generator
+                      halton_generator
                       boost_unit_test_framework)
 add_test(LAZY_PRM_TEST ${CMAKE_CURRENT_BINARY_DIR}/lazy_prm_test)
