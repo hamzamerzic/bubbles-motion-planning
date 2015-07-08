@@ -249,7 +249,7 @@ BOOST_AUTO_TEST_CASE(build2) {
       "models/abb-irb-120/5link.stl", "models/abb-irb-120/6link.stl"},
       "models/abb-irb-120/parameters.txt",
       "models/environment/obstacles_hard.stl",
-      generator.release(), 4000));
+      generator.release(), 10000));
   EVectorXd start (6); start << -1.570796327,  // -90
                                  1.134464014,  // 65
                                 -1.308996939,  //-75
@@ -263,7 +263,7 @@ BOOST_AUTO_TEST_CASE(build2) {
                             0.7330382858,  // 42
                             3.839724354;   // 220
 
-  BubblePrm bubble_prm (pqp.release(), start, end, 60);
+  BubblePrm bubble_prm (pqp.release(), start, end, 100);
   BOOST_CHECK_EQUAL(bubble_prm.BuildTree("bubble_hard"), true);
   auto end_t = std::chrono::steady_clock::now();
   auto duration = end_t - start_t;
@@ -290,7 +290,7 @@ BOOST_AUTO_TEST_CASE(build2h) {
       "models/abb-irb-120/5link.stl", "models/abb-irb-120/6link.stl"},
       "models/abb-irb-120/parameters.txt",
       "models/environment/obstacles_hard.stl",
-      generator.release(), 4000));
+      generator.release(), 10000));
   EVectorXd start (6); start << -1.570796327,  // -90
                                  1.134464014,  // 65
                                 -1.308996939,  //-75
@@ -304,7 +304,7 @@ BOOST_AUTO_TEST_CASE(build2h) {
                             0.7330382858,  // 42
                             3.839724354;   // 220
 
-  BubblePrm bubble_prm (pqp.release(), start, end, 60);
+  BubblePrm bubble_prm (pqp.release(), start, end, 100);
   BOOST_CHECK_EQUAL(bubble_prm.BuildTree("bubble_hardh"), true);
   auto end_t = std::chrono::steady_clock::now();
   auto duration = end_t - start_t;
@@ -331,7 +331,7 @@ BOOST_AUTO_TEST_CASE(build3) {
       "models/abb-irb-120/5link.stl", "models/abb-irb-120/6link.stl"},
       "models/abb-irb-120/parameters.txt",
       "models/environment/obstacles_hard.stl",
-      generator.release(), 4000));
+      generator.release(), 6000));
   EVectorXd start (6); start << -1.570796327,  // -90
                                  1.134464014,  // 65
                                 -1.308996939,  //-75
@@ -345,7 +345,7 @@ BOOST_AUTO_TEST_CASE(build3) {
                             -0.5235987756,  // -30
                             -4.36332313;    // -250
 
-  BubblePrm bubble_prm (pqp.release(), start, end, 60);
+  BubblePrm bubble_prm (pqp.release(), start, end, 40);
   BOOST_CHECK_EQUAL(bubble_prm.BuildTree("bubble_hard2"), true);
   auto end_t = std::chrono::steady_clock::now();
   auto duration = end_t - start_t;
@@ -372,7 +372,7 @@ BOOST_AUTO_TEST_CASE(build3h) {
       "models/abb-irb-120/5link.stl", "models/abb-irb-120/6link.stl"},
       "models/abb-irb-120/parameters.txt",
       "models/environment/obstacles_hard.stl",
-      generator.release(), 4000));
+      generator.release(), 6000));
   EVectorXd start (6); start << -1.570796327,  // -90
                                  1.134464014,  // 65
                                 -1.308996939,  //-75
@@ -386,7 +386,7 @@ BOOST_AUTO_TEST_CASE(build3h) {
                             -0.5235987756,  // -30
                             -4.36332313;    // -250
 
-  BubblePrm bubble_prm (pqp.release(), start, end, 60);
+  BubblePrm bubble_prm (pqp.release(), start, end, 40);
   BOOST_CHECK_EQUAL(bubble_prm.BuildTree("bubble_hard2h"), true);
   auto end_t = std::chrono::steady_clock::now();
   auto duration = end_t - start_t;
