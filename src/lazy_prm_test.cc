@@ -30,6 +30,8 @@
 #include "random_generator/halton_generator.h"
 #include <boost/test/unit_test.hpp>
 
+using namespace lazyprm;
+
 typedef Eigen::VectorXd EVectorXd;
 
 BOOST_AUTO_TEST_CASE(build) {

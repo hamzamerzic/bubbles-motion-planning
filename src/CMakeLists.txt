@@ -23,7 +23,11 @@ target_link_libraries(lazy_prm
 
 add_executable(main main.cc)
 target_link_libraries(main
-                      PQP)
+                      bubble_prm
+                      lazy_prm
+                      pqp_environment
+                      naive_generator
+                      halton_generator)
 
 #Tests
 add_executable(dh_parameter_test dh_parameter_test.cc)

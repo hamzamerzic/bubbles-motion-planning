@@ -14,167 +14,768 @@
  * limitations under the License.
  *
 */
+#include "bubble_prm.h"
+#include "lazy_prm.h"
+
+#include <vector>
+#include <memory>
 #include <cmath>
-#include <cstdio>
-#include <PQP/PQP.h>
-#include <Eigen/Dense>
+#include <chrono>
+#include <fstream>
 #include <iostream>
 
-#define LISTS 1
+#include "environment/pqp_environment.h"
+#include "random_generator/naive_generator.h"
+#include "random_generator/halton_generator.h"
 
-const float seg_width = 0.0001;
-typedef Eigen::Matrix<float, 3, 3, Eigen::RowMajor> Matrix;
-typedef Eigen::Vector3f Vector;
+using ::bubbleprm::BubblePrm;
+using ::lazyprm::LazyPrm;
 
-void DHTable(double theta, double d, double a, double alpha,
-             Matrix& R, Vector& T) {
-  R << cos(theta), -sin(theta)*cos(alpha),  sin(theta)*sin(alpha),
-       sin(theta),  cos(theta)*cos(alpha), -cos(theta)*sin(alpha),
-       0.0,         sin(alpha),             cos(alpha);
-
-  T << a*cos(theta), a*sin(theta), d;
-}
+typedef Eigen::VectorXd EVectorXd;
 
 int main() {
-  // initialize PQP model pointers
-  PQP_Model *b1 = new PQP_Model;
-  PQP_Model *b2 = new PQP_Model;
-  PQP_Model *obs = new PQP_Model;
+  // Limits
+  std::vector<std::pair<double, double>> limits;
+  limits.emplace_back(-2.879793266, 2.879793266);
+  limits.emplace_back(-1.919862177, 1.919862177);
+  limits.emplace_back(-1.570796327, 1.221730476);
+  limits.emplace_back(-2.792526803, 2.792526803);
+  limits.emplace_back(-2.094395102, 2.094395102);
+  limits.emplace_back(-6.981317008, 6.981317008);
 
-  b1->BeginModel();
-  b2->BeginModel();
-  obs->BeginModel();
-  PQP_REAL tri1[3][3] {{0.0, 0.0, 0.0},
-    {1.5, 0.0, 0.0},
-    {1.5, seg_width, 0.0}
-  },
+  // Configurations trivial 1
+  EVectorXd start_trivial1 (6); start_trivial1 << -0.7330382858,   // -42
+                                                  -0.5235987756,   // -30
+                                                  -0.03490658504,  // -2
+                                                   0.5585053606,   // 30
+                                                  -0.03490658504,  // -2
+                                                   0.8203047484;   // 47
+  EVectorXd end_trivial1 (6); end_trivial1 << 2.094395102,   // 120
+                                              0.2792526803,  // 16
+                                              0.2443460953,  // 14
+                                              1.570796327,   // 90
+                                             -0.2443460953,  // -14
+                                             -0.5235987756;  // -30
 
-  tri2[3][3] {{0.0, 0.0, 0.0},
-    {0.0, seg_width, 0.0},
-    {1.5, seg_width, 0.0}
-  },
+  // Configurations trivial 2
+  EVectorXd start_trivial2 (6); start_trivial2 << -0.698131700797732,   // -40
+                                                   1.221730476396031,   //  70
+                                                   -1.396263401595464,  // -80
+                                                   0.261799387799149,   //  15
+                                                   -0.314159265358979,  // -18
+                                                   -5.235987755982989;  // -300
+  EVectorXd end_trivial2 (6); end_trivial2 <<  0.610865238198015,   //  35
+                                               1.047197551196598,   //  60
+                                               -0.523598775598299,  // -30
+                                               -1.047197551196598,  // -60
+                                               -0.872664625997165,  // -50
+                                               3.490658503988659;   //  200
 
-  tri3[3][3] {{0.0, 0.0, 0.0},
-    {1.0, 0.0, 0.0},
-    {1.0, seg_width, 0.0}
-  },
+  // Configurations easy 1
+  EVectorXd start_easy1 (6); start_easy1 << 0.959931089,  // 55
+                                            1.221730476,  // 70
+                                           -0.907571211,  // -52
+                                            0.0,          // 0
+                                           -0.523598776,  // -30
+                                           -0.523598776;  // -30
+  EVectorXd end_easy1 (6); end_easy1 << -0.785398163,  // -45
+                                         0.41887902,   // 24
+                                        -0.34906585,   // -20
+                                        -1.570796327,  // -90
+                                         0.20943951,   // 12
+                                        -2.35619449;   // -135
 
-  tri4[3][3] {{0.0, 0.0, 0.0},
-    {0.0, seg_width, 0.0},
-    {1.0, seg_width, 0.0}
-  },
+  // Configurations easy 2
+  EVectorXd start_easy2 (6); start_easy2 << 0.698131700797732,   //  40
+                                            1.047197551196598,   //  60
+                                            -0.523598775598299,  // -30
+                                            -1.047197551196598,  // -60
+                                            -0.872664625997165,  // -50
+                                            3.490658503988659;   //  200
+  EVectorXd end_easy2 (6); end_easy2 << -1.5707963267948966,   // -90
+                                         0.0872664625997165,   //  5
+                                         -1.3962634015954636,  // -80
+                                         1.5707963267948966,   //  90
+                                         -0.0872664625997165,  // -5
+                                         -4.3633231299858233;  // -250
 
-  tri5[3][3] {{-0.999, 1.5, 0.0},
-    {-1.0, 1.501, 0.0},
-    {-1.0, 1.499, 0.0}
-  };
+  // Configuration hard 1
+  EVectorXd start_hard1 (6); start_hard1 << -1.570796327,  // -90
+                                             1.134464014,  // 65
+                                            -1.308996939,  //-75
+                                             0.523598776,  // 30
+                                             0.209439510,  // 12
+                                             0.0;          // 0
+  EVectorXd end_hard1 (6); end_hard1 << 0.174532925,   // 10
+                                        0.872664626,   // 50
+                                       -1.134464014,   // -65
+                                        0.959931089,   // 55
+                                        0.7330382858,  // 42
+                                        3.839724354;   // 220
 
-  b1->AddTri(tri1[0], tri1[1], tri1[2], 0);
-  b1->AddTri(tri2[0], tri2[1], tri2[2], 1);
-  b2->AddTri(tri3[0], tri3[1], tri3[2], 0);
-  b2->AddTri(tri4[0], tri4[1], tri4[2], 1);
-  obs->AddTri(tri5[0], tri5[1], tri5[2], 0);
+  // Configuration hard 2
+  EVectorXd start_hard2 (6); start_hard2 << -1.570796327,  // -90
+                                             1.134464014,  // 65
+                                            -1.308996939,  //-75
+                                             0.523598776,  // 30
+                                             0.209439510,  // 12
+                                             0.0;          // 0
+  EVectorXd end_hard2 (6); end_hard2 << 0.174532925,   // 10
+                                        0.872664626,   // 50
+                                       -1.134464014,   // -65
+                                        0.959931089,   // 55
+                                        0.7330382858,  // 42
+                                        3.839724354;   // 220
 
-  b1->EndModel();
-  b2->EndModel();
-  obs->EndModel();
-  Matrix dh1R, dh2R;
-  Vector dh1T, dh2T;
+  // TEST BUBBLE TRIVIAL 1
+  double timing = 0.0;
+  std::string logtimings;
+  for (unsigned i = 0; i < 100; ++i) {
+    auto start_t = std::chrono::steady_clock::now();
+    std::unique_ptr<RandomSpaceGeneratorInterface> generator (
+      new NaiveGenerator(limits));
+    std::unique_ptr<PqpEnvironment> pqp (new PqpEnvironment(
+        {"models/abb-irb-120/1link.stl", "models/abb-irb-120/2link.stl",
+        "models/abb-irb-120/3link1.stl", "models/abb-irb-120/4link1.stl",
+        "models/abb-irb-120/5link.stl", "models/abb-irb-120/6link.stl"},
+        "models/abb-irb-120/parameters.txt",
+        "models/environment/obstacles_trivial.stl",
+        generator.release(), 1000));
+    BubblePrm bubble_prm (pqp.release(), start_trivial1, end_trivial1, 10);
 
-  DHTable(0.0, 0.0, 1.5, 0.0, dh1R, dh1T);
-  DHTable(0.0, 0.0, 1.0, 0.0, dh2R, dh2T);
-
-  Matrix R1, R2, R = Matrix::Identity();
-
-  double q1 = M_PI_2, q2 = 0;
-  R1 << cos(q1), -sin(q1), 0.0,
-        sin(q1),  cos(q1), 0.0,
-        0.0,          0.0, 1.0;
-
-  R2 << cos(q2), -sin(q2), 0.0,
-        sin(q2),  cos(q2), 0.0,
-        0.0,          0.0, 1.0;
-
-  Vector T1, T2, T;
-  T <<  0.0, 0.0, 0.0;
-  T1 << 0.0, 0.0, 0.0;
-  T2 << 0.0, 0.0, 0.0;
-
-  R2 = R1 * dh1R * R2;
-  T2 = R2 * T2 + R1 * dh1T;
-
-  Vector v;
-  v << 0.0, 0.0, 0.0;
-  std::cout << R1 * v << std::endl;
-  std::cout << R2 * v + R1 * dh1T << std::endl;
-
-  // perform a collision query
-
-  PQP_CollideResult cres;
-  PQP_Collide(&cres, reinterpret_cast<PQP_REAL(*)[3]>(R1.data()), T1.data(), b1,
-              reinterpret_cast<PQP_REAL(*)[3]>(R.data()), T.data(),
-              obs, PQP_ALL_CONTACTS);
-
-  // looking at the report, we can see where all the contacts were, and
-  // also how many tests were necessary:
-
-  printf("\nAll contact collision query between overlapping tori:\n");
-  printf("Num BV tests: %d\n", cres.NumBVTests());
-  printf("Num Tri tests: %d\n", cres.NumTriTests());
-  printf("Num contact pairs: %d\n", cres.NumPairs());
-#if LISTS
-  int i;
-  for(i=0; i<cres.NumPairs(); i++) {
-    printf("\t contact %4d: tri %4d and tri %4d\n",
-           i,
-           cres.Id1(i),
-           cres.Id2(i));
+    std::string logname ("logs/bubble_trivial1/bubble" + std::to_string(i));
+    if(bubble_prm.BuildTree(logname)) {
+      auto end_t = std::chrono::steady_clock::now();
+      auto duration = end_t - start_t;
+      timing += std::chrono::duration <double, std::milli> (duration).count();
+    }
+    else
+      --i;
   }
-#endif
+  logtimings += std::to_string(timing) + '\n';
 
-  PQP_Collide(&cres, reinterpret_cast<PQP_REAL(*)[3]>(R2.data()), T2.data(), b2,
-              reinterpret_cast<PQP_REAL(*)[3]>(R.data()), T.data(),
-              obs, PQP_ALL_CONTACTS);
+  // TEST BUBBLE TRIVIAL 1H
+  timing = 0.0;
 
-  // looking at the report, we can see where all the contacts were, and
-  // also how many tests were necessary:
+  for (unsigned i = 0; i < 100; ++i) {
+    auto start_t = std::chrono::steady_clock::now();
+    std::unique_ptr<RandomSpaceGeneratorInterface> generator (
+      new HaltonGenerator(limits));
+    std::unique_ptr<PqpEnvironment> pqp (new PqpEnvironment(
+        {"models/abb-irb-120/1link.stl", "models/abb-irb-120/2link.stl",
+        "models/abb-irb-120/3link1.stl", "models/abb-irb-120/4link1.stl",
+        "models/abb-irb-120/5link.stl", "models/abb-irb-120/6link.stl"},
+        "models/abb-irb-120/parameters.txt",
+        "models/environment/obstacles_trivial.stl",
+        generator.release(), 1000));
+    BubblePrm bubble_prm (pqp.release(), start_trivial1, end_trivial1, 10);
 
-  printf("\nAll contact collision query between overlapping tori:\n");
-  printf("Num BV tests: %d\n", cres.NumBVTests());
-  printf("Num Tri tests: %d\n", cres.NumTriTests());
-  printf("Num contact pairs: %d\n", cres.NumPairs());
-#if LISTS
-
-  for(i=0; i<cres.NumPairs(); i++) {
-    printf("\t contact %4d: tri %4d and tri %4d\n",
-           i,
-           cres.Id1(i),
-           cres.Id2(i));
+    std::string logname ("logs/bubble_trivial1h/bubble" + std::to_string(i));
+    if(bubble_prm.BuildTree(logname)) {
+      auto end_t = std::chrono::steady_clock::now();
+      auto duration = end_t - start_t;
+      timing += std::chrono::duration <double, std::milli> (duration).count();
+    }
+    else
+      --i;
   }
-#endif
+  logtimings += std::to_string(timing) + '\n';
 
-  // Notice the PQP_ALL_CONTACTS flag we used in the call to PQP_Collide.
-  // The alternative is to use the PQP_FIRST_CONTACT flag, instead.
-  // The result is that the collide routine searches for any contact,
-  // but not all of them.  It can take many many fewer tests to locate a single
-  // contact.
+  // TEST BUBBLE TRIVIAL 2
+  timing = 0.0;
 
-  // Perform a distance query, which should return a distance of 0.0
+  for (unsigned i = 0; i < 100; ++i) {
+    auto start_t = std::chrono::steady_clock::now();
+    std::unique_ptr<RandomSpaceGeneratorInterface> generator (
+      new NaiveGenerator(limits));
+    std::unique_ptr<PqpEnvironment> pqp (new PqpEnvironment(
+        {"models/abb-irb-120/1link.stl", "models/abb-irb-120/2link.stl",
+        "models/abb-irb-120/3link1.stl", "models/abb-irb-120/4link1.stl",
+        "models/abb-irb-120/5link.stl", "models/abb-irb-120/6link.stl"},
+        "models/abb-irb-120/parameters.txt",
+        "models/environment/obstacles_trivial.stl",
+        generator.release(), 1200));
+    BubblePrm bubble_prm (pqp.release(), start_trivial2, end_trivial2, 15);
 
-  PQP_DistanceResult dres;
-  PQP_Distance(&dres, reinterpret_cast<PQP_REAL(*)[3]>(R2.data()), T2.data(),
-               b2, reinterpret_cast<PQP_REAL(*)[3]>(R.data()), T.data(), obs,
-               0.0, 0.0);
+    std::string logname ("logs/bubble_trivial2/bubble" + std::to_string(i));
+    if(bubble_prm.BuildTree(logname)) {
+      auto end_t = std::chrono::steady_clock::now();
+      auto duration = end_t - start_t;
+      timing += std::chrono::duration <double, std::milli> (duration).count();
+    }
+    else
+      --i;
+  }
+  logtimings += std::to_string(timing) + '\n';
 
-  printf("\nDistance query between overlapping tori\n");
-  printf("Num BV tests: %d\n", dres.NumBVTests());
-  printf("Num Tri tests: %d\n", dres.NumTriTests());
-  printf("Distance: %lf\n", dres.Distance());
+  // TEST BUBBLE TRIVIAL 2H
+  timing = 0.0;
 
-  delete b1;
-  delete b2;
-  delete obs;
+  for (unsigned i = 0; i < 100; ++i) {
+    auto start_t = std::chrono::steady_clock::now();
+    std::unique_ptr<RandomSpaceGeneratorInterface> generator (
+      new HaltonGenerator(limits));
+    std::unique_ptr<PqpEnvironment> pqp (new PqpEnvironment(
+        {"models/abb-irb-120/1link.stl", "models/abb-irb-120/2link.stl",
+        "models/abb-irb-120/3link1.stl", "models/abb-irb-120/4link1.stl",
+        "models/abb-irb-120/5link.stl", "models/abb-irb-120/6link.stl"},
+        "models/abb-irb-120/parameters.txt",
+        "models/environment/obstacles_trivial.stl",
+        generator.release(), 1200));
+    BubblePrm bubble_prm (pqp.release(), start_trivial2, end_trivial2, 15);
 
+    std::string logname ("logs/bubble_trivial2h/bubble" + std::to_string(i));
+    if(bubble_prm.BuildTree(logname)) {
+      auto end_t = std::chrono::steady_clock::now();
+      auto duration = end_t - start_t;
+      timing += std::chrono::duration <double, std::milli> (duration).count();
+    }
+    else
+      --i;
+  }
+  logtimings += std::to_string(timing) + '\n';
+
+  // TEST BUBBLE EASY 1
+  timing = 0.0;
+
+  for (unsigned i = 0; i < 100; ++i) {
+    auto start_t = std::chrono::steady_clock::now();
+    std::unique_ptr<RandomSpaceGeneratorInterface> generator (
+      new NaiveGenerator(limits));
+    std::unique_ptr<PqpEnvironment> pqp (new PqpEnvironment(
+        {"models/abb-irb-120/1link.stl", "models/abb-irb-120/2link.stl",
+        "models/abb-irb-120/3link1.stl", "models/abb-irb-120/4link1.stl",
+        "models/abb-irb-120/5link.stl", "models/abb-irb-120/6link.stl"},
+        "models/abb-irb-120/parameters.txt",
+        "models/environment/obstacles_easy.stl",
+        generator.release(), 2000));
+    BubblePrm bubble_prm (pqp.release(), start_easy1, end_easy1, 20);
+
+    std::string logname ("logs/bubble_easy1/bubble" + std::to_string(i));
+    if(bubble_prm.BuildTree(logname)) {
+      auto end_t = std::chrono::steady_clock::now();
+      auto duration = end_t - start_t;
+      timing += std::chrono::duration <double, std::milli> (duration).count();
+    }
+    else
+      --i;
+  }
+  logtimings += std::to_string(timing) + '\n';
+
+  // TEST BUBBLE EASY 1H
+  timing = 0.0;
+
+  for (unsigned i = 0; i < 100; ++i) {
+    auto start_t = std::chrono::steady_clock::now();
+    std::unique_ptr<RandomSpaceGeneratorInterface> generator (
+      new HaltonGenerator(limits));
+    std::unique_ptr<PqpEnvironment> pqp (new PqpEnvironment(
+        {"models/abb-irb-120/1link.stl", "models/abb-irb-120/2link.stl",
+        "models/abb-irb-120/3link1.stl", "models/abb-irb-120/4link1.stl",
+        "models/abb-irb-120/5link.stl", "models/abb-irb-120/6link.stl"},
+        "models/abb-irb-120/parameters.txt",
+        "models/environment/obstacles_easy.stl",
+        generator.release(), 2000));
+    BubblePrm bubble_prm (pqp.release(), start_easy1, end_easy1, 20);
+
+    std::string logname ("logs/bubble_easy1h/bubble" + std::to_string(i));
+    if(bubble_prm.BuildTree(logname)) {
+      auto end_t = std::chrono::steady_clock::now();
+      auto duration = end_t - start_t;
+      timing += std::chrono::duration <double, std::milli> (duration).count();
+    }
+    else
+      --i;
+  }
+  logtimings += std::to_string(timing) + '\n';
+
+  // TEST BUBBLE EASY 2
+  timing = 0.0;
+
+  for (unsigned i = 0; i < 100; ++i) {
+    auto start_t = std::chrono::steady_clock::now();
+    std::unique_ptr<RandomSpaceGeneratorInterface> generator (
+      new NaiveGenerator(limits));
+    std::unique_ptr<PqpEnvironment> pqp (new PqpEnvironment(
+        {"models/abb-irb-120/1link.stl", "models/abb-irb-120/2link.stl",
+        "models/abb-irb-120/3link1.stl", "models/abb-irb-120/4link1.stl",
+        "models/abb-irb-120/5link.stl", "models/abb-irb-120/6link.stl"},
+        "models/abb-irb-120/parameters.txt",
+        "models/environment/obstacles_easy.stl",
+        generator.release(), 2200));
+    BubblePrm bubble_prm (pqp.release(), start_easy2, end_easy2, 25);
+
+    std::string logname ("logs/bubble_easy2/bubble" + std::to_string(i));
+    if(bubble_prm.BuildTree(logname)) {
+      auto end_t = std::chrono::steady_clock::now();
+      auto duration = end_t - start_t;
+      timing += std::chrono::duration <double, std::milli> (duration).count();
+    }
+    else
+      --i;
+  }
+  logtimings += std::to_string(timing) + '\n';
+
+  // TEST BUBBLE EASY 2H
+  timing = 0.0;
+
+  for (unsigned i = 0; i < 100; ++i) {
+    auto start_t = std::chrono::steady_clock::now();
+    std::unique_ptr<RandomSpaceGeneratorInterface> generator (
+      new HaltonGenerator(limits));
+    std::unique_ptr<PqpEnvironment> pqp (new PqpEnvironment(
+        {"models/abb-irb-120/1link.stl", "models/abb-irb-120/2link.stl",
+        "models/abb-irb-120/3link1.stl", "models/abb-irb-120/4link1.stl",
+        "models/abb-irb-120/5link.stl", "models/abb-irb-120/6link.stl"},
+        "models/abb-irb-120/parameters.txt",
+        "models/environment/obstacles_easy.stl",
+        generator.release(), 2200));
+    BubblePrm bubble_prm (pqp.release(), start_easy2, end_easy2, 25);
+
+    std::string logname ("logs/bubble_easy2h/bubble" + std::to_string(i));
+    if(bubble_prm.BuildTree(logname)) {
+      auto end_t = std::chrono::steady_clock::now();
+      auto duration = end_t - start_t;
+      timing += std::chrono::duration <double, std::milli> (duration).count();
+    }
+    else
+      --i;
+  }
+  logtimings += std::to_string(timing) + '\n';
+
+  // TEST BUBBLE HARD 1
+  timing = 0.0;
+
+  for (unsigned i = 0; i < 100; ++i) {
+    auto start_t = std::chrono::steady_clock::now();
+    std::unique_ptr<RandomSpaceGeneratorInterface> generator (
+      new NaiveGenerator(limits));
+    std::unique_ptr<PqpEnvironment> pqp (new PqpEnvironment(
+        {"models/abb-irb-120/1link.stl", "models/abb-irb-120/2link.stl",
+        "models/abb-irb-120/3link1.stl", "models/abb-irb-120/4link1.stl",
+        "models/abb-irb-120/5link.stl", "models/abb-irb-120/6link.stl"},
+        "models/abb-irb-120/parameters.txt",
+        "models/environment/obstacles_hard.stl",
+        generator.release(), 4000));
+    BubblePrm bubble_prm (pqp.release(), start_hard1, end_hard1, 60);
+
+    std::string logname ("logs/bubble_hard1/bubble" + std::to_string(i));
+    if(bubble_prm.BuildTree(logname)) {
+      auto end_t = std::chrono::steady_clock::now();
+      auto duration = end_t - start_t;
+      timing += std::chrono::duration <double, std::milli> (duration).count();
+    }
+    else
+      --i;
+  }
+  logtimings += std::to_string(timing) + '\n';
+
+  // TEST BUBBLE HARD 1H
+  timing = 0.0;
+
+  for (unsigned i = 0; i < 100; ++i) {
+    auto start_t = std::chrono::steady_clock::now();
+    std::unique_ptr<RandomSpaceGeneratorInterface> generator (
+      new HaltonGenerator(limits));
+    std::unique_ptr<PqpEnvironment> pqp (new PqpEnvironment(
+        {"models/abb-irb-120/1link.stl", "models/abb-irb-120/2link.stl",
+        "models/abb-irb-120/3link1.stl", "models/abb-irb-120/4link1.stl",
+        "models/abb-irb-120/5link.stl", "models/abb-irb-120/6link.stl"},
+        "models/abb-irb-120/parameters.txt",
+        "models/environment/obstacles_hard.stl",
+        generator.release(), 4000));
+    BubblePrm bubble_prm (pqp.release(), start_hard1, end_hard1, 60);
+
+    std::string logname ("logs/bubble_hard1h/bubble" + std::to_string(i));
+    if(bubble_prm.BuildTree(logname)) {
+      auto end_t = std::chrono::steady_clock::now();
+      auto duration = end_t - start_t;
+      timing += std::chrono::duration <double, std::milli> (duration).count();
+    }
+    else
+      --i;
+  }
+  logtimings += std::to_string(timing) + '\n';
+
+  // TEST BUBBLE HARD 2
+  timing = 0.0;
+
+  for (unsigned i = 0; i < 100; ++i) {
+    auto start_t = std::chrono::steady_clock::now();
+    std::unique_ptr<RandomSpaceGeneratorInterface> generator (
+      new NaiveGenerator(limits));
+    std::unique_ptr<PqpEnvironment> pqp (new PqpEnvironment(
+        {"models/abb-irb-120/1link.stl", "models/abb-irb-120/2link.stl",
+        "models/abb-irb-120/3link1.stl", "models/abb-irb-120/4link1.stl",
+        "models/abb-irb-120/5link.stl", "models/abb-irb-120/6link.stl"},
+        "models/abb-irb-120/parameters.txt",
+        "models/environment/obstacles_hard.stl",
+        generator.release(), 4000));
+    BubblePrm bubble_prm (pqp.release(), start_hard2, end_hard2, 60);
+
+    std::string logname ("logs/bubble_hard2/bubble" + std::to_string(i));
+    if(bubble_prm.BuildTree(logname)) {
+      auto end_t = std::chrono::steady_clock::now();
+      auto duration = end_t - start_t;
+      timing += std::chrono::duration <double, std::milli> (duration).count();
+    }
+    else
+      --i;
+  }
+  logtimings += std::to_string(timing) + '\n';
+
+  // TEST BUBBLE HARD 2H
+  timing = 0.0;
+
+  for (unsigned i = 0; i < 100; ++i) {
+    auto start_t = std::chrono::steady_clock::now();
+    std::unique_ptr<RandomSpaceGeneratorInterface> generator (
+      new HaltonGenerator(limits));
+    std::unique_ptr<PqpEnvironment> pqp (new PqpEnvironment(
+        {"models/abb-irb-120/1link.stl", "models/abb-irb-120/2link.stl",
+        "models/abb-irb-120/3link1.stl", "models/abb-irb-120/4link1.stl",
+        "models/abb-irb-120/5link.stl", "models/abb-irb-120/6link.stl"},
+        "models/abb-irb-120/parameters.txt",
+        "models/environment/obstacles_hard.stl",
+        generator.release(), 4000));
+    BubblePrm bubble_prm (pqp.release(), start_hard2, end_hard2, 60);
+
+    std::string logname ("logs/bubble_hard2h/bubble" + std::to_string(i));
+    if(bubble_prm.BuildTree(logname)) {
+      auto end_t = std::chrono::steady_clock::now();
+      auto duration = end_t - start_t;
+      timing += std::chrono::duration <double, std::milli> (duration).count();
+    }
+    else
+      --i;
+  }
+  logtimings += std::to_string(timing) + '\n';
+
+  // TEST LAZY TRIVIAL 1
+  timing = 0.0;
+
+  for (unsigned i = 0; i < 100; ++i) {
+    auto start_t = std::chrono::steady_clock::now();
+    std::unique_ptr<RandomSpaceGeneratorInterface> generator (
+      new NaiveGenerator(limits));
+    std::unique_ptr<PqpEnvironment> pqp (new PqpEnvironment(
+        {"models/abb-irb-120/1link.stl", "models/abb-irb-120/2link.stl",
+        "models/abb-irb-120/3link1.stl", "models/abb-irb-120/4link1.stl",
+        "models/abb-irb-120/5link.stl", "models/abb-irb-120/6link.stl"},
+        "models/abb-irb-120/parameters.txt",
+        "models/environment/obstacles_trivial.stl",
+        generator.release(), 1000));
+    LazyPrm lazy_prm (pqp.release(), start_trivial1, end_trivial1, 10);
+
+    std::string logname ("logs/lazy_trivial1/bubble" + std::to_string(i));
+    if(lazy_prm.BuildTree(logname)) {
+      auto end_t = std::chrono::steady_clock::now();
+      auto duration = end_t - start_t;
+      timing += std::chrono::duration <double, std::milli> (duration).count();
+    }
+    else
+      --i;
+  }
+  logtimings += std::to_string(timing) + '\n';
+
+  // TEST LAZY TRIVIAL 1H
+  timing = 0.0;
+
+  for (unsigned i = 0; i < 100; ++i) {
+    auto start_t = std::chrono::steady_clock::now();
+    std::unique_ptr<RandomSpaceGeneratorInterface> generator (
+      new HaltonGenerator(limits));
+    std::unique_ptr<PqpEnvironment> pqp (new PqpEnvironment(
+        {"models/abb-irb-120/1link.stl", "models/abb-irb-120/2link.stl",
+        "models/abb-irb-120/3link1.stl", "models/abb-irb-120/4link1.stl",
+        "models/abb-irb-120/5link.stl", "models/abb-irb-120/6link.stl"},
+        "models/abb-irb-120/parameters.txt",
+        "models/environment/obstacles_trivial.stl",
+        generator.release(), 1000));
+    LazyPrm lazy_prm (pqp.release(), start_trivial1, end_trivial1, 10);
+
+    std::string logname ("logs/lazy_trivial1h/bubble" + std::to_string(i));
+    if(lazy_prm.BuildTree(logname)) {
+      auto end_t = std::chrono::steady_clock::now();
+      auto duration = end_t - start_t;
+      timing += std::chrono::duration <double, std::milli> (duration).count();
+    }
+    else
+      --i;
+  }
+  logtimings += std::to_string(timing) + '\n';
+
+  // TEST LAZY TRIVIAL 2
+  timing = 0.0;
+
+  for (unsigned i = 0; i < 100; ++i) {
+    auto start_t = std::chrono::steady_clock::now();
+    std::unique_ptr<RandomSpaceGeneratorInterface> generator (
+      new NaiveGenerator(limits));
+    std::unique_ptr<PqpEnvironment> pqp (new PqpEnvironment(
+        {"models/abb-irb-120/1link.stl", "models/abb-irb-120/2link.stl",
+        "models/abb-irb-120/3link1.stl", "models/abb-irb-120/4link1.stl",
+        "models/abb-irb-120/5link.stl", "models/abb-irb-120/6link.stl"},
+        "models/abb-irb-120/parameters.txt",
+        "models/environment/obstacles_trivial.stl",
+        generator.release(), 1200));
+    LazyPrm lazy_prm (pqp.release(), start_trivial2, end_trivial2, 15);
+
+    std::string logname ("logs/lazy_trivial2/bubble" + std::to_string(i));
+    if(lazy_prm.BuildTree(logname)) {
+      auto end_t = std::chrono::steady_clock::now();
+      auto duration = end_t - start_t;
+      timing += std::chrono::duration <double, std::milli> (duration).count();
+    }
+    else
+      --i;
+  }
+  logtimings += std::to_string(timing) + '\n';
+
+  // TEST LAZY TRIVIAL 2H
+  timing = 0.0;
+
+  for (unsigned i = 0; i < 100; ++i) {
+    auto start_t = std::chrono::steady_clock::now();
+    std::unique_ptr<RandomSpaceGeneratorInterface> generator (
+      new HaltonGenerator(limits));
+    std::unique_ptr<PqpEnvironment> pqp (new PqpEnvironment(
+        {"models/abb-irb-120/1link.stl", "models/abb-irb-120/2link.stl",
+        "models/abb-irb-120/3link1.stl", "models/abb-irb-120/4link1.stl",
+        "models/abb-irb-120/5link.stl", "models/abb-irb-120/6link.stl"},
+        "models/abb-irb-120/parameters.txt",
+        "models/environment/obstacles_trivial.stl",
+        generator.release(), 1200));
+    LazyPrm lazy_prm (pqp.release(), start_trivial2, end_trivial2, 15);
+
+    std::string logname ("logs/lazy_trivial2h/bubble" + std::to_string(i));
+    if(lazy_prm.BuildTree(logname)) {
+      auto end_t = std::chrono::steady_clock::now();
+      auto duration = end_t - start_t;
+      timing += std::chrono::duration <double, std::milli> (duration).count();
+    }
+    else
+      --i;
+  }
+  logtimings += std::to_string(timing) + '\n';
+
+  // TEST LAZY EASY 1
+  timing = 0.0;
+
+  for (unsigned i = 0; i < 100; ++i) {
+    auto start_t = std::chrono::steady_clock::now();
+    std::unique_ptr<RandomSpaceGeneratorInterface> generator (
+      new NaiveGenerator(limits));
+    std::unique_ptr<PqpEnvironment> pqp (new PqpEnvironment(
+        {"models/abb-irb-120/1link.stl", "models/abb-irb-120/2link.stl",
+        "models/abb-irb-120/3link1.stl", "models/abb-irb-120/4link1.stl",
+        "models/abb-irb-120/5link.stl", "models/abb-irb-120/6link.stl"},
+        "models/abb-irb-120/parameters.txt",
+        "models/environment/obstacles_easy.stl",
+        generator.release(), 2000));
+    LazyPrm lazy_prm (pqp.release(), start_easy1, end_easy1, 20);
+
+    std::string logname ("logs/lazy_easy1/bubble" + std::to_string(i));
+    if(lazy_prm.BuildTree(logname)) {
+      auto end_t = std::chrono::steady_clock::now();
+      auto duration = end_t - start_t;
+      timing += std::chrono::duration <double, std::milli> (duration).count();
+    }
+    else
+      --i;
+  }
+  logtimings += std::to_string(timing) + '\n';
+
+  // TEST LAZY EASY 1H
+  timing = 0.0;
+
+  for (unsigned i = 0; i < 100; ++i) {
+    auto start_t = std::chrono::steady_clock::now();
+    std::unique_ptr<RandomSpaceGeneratorInterface> generator (
+      new HaltonGenerator(limits));
+    std::unique_ptr<PqpEnvironment> pqp (new PqpEnvironment(
+        {"models/abb-irb-120/1link.stl", "models/abb-irb-120/2link.stl",
+        "models/abb-irb-120/3link1.stl", "models/abb-irb-120/4link1.stl",
+        "models/abb-irb-120/5link.stl", "models/abb-irb-120/6link.stl"},
+        "models/abb-irb-120/parameters.txt",
+        "models/environment/obstacles_easy.stl",
+        generator.release(), 2000));
+    LazyPrm lazy_prm (pqp.release(), start_easy1, end_easy1, 20);
+
+    std::string logname ("logs/lazy_easy1h/bubble" + std::to_string(i));
+    if(lazy_prm.BuildTree(logname)) {
+      auto end_t = std::chrono::steady_clock::now();
+      auto duration = end_t - start_t;
+      timing += std::chrono::duration <double, std::milli> (duration).count();
+    }
+    else
+      --i;
+  }
+  logtimings += std::to_string(timing) + '\n';
+
+  // TEST LAZY EASY 2
+  timing = 0.0;
+
+  for (unsigned i = 0; i < 100; ++i) {
+    auto start_t = std::chrono::steady_clock::now();
+    std::unique_ptr<RandomSpaceGeneratorInterface> generator (
+      new NaiveGenerator(limits));
+    std::unique_ptr<PqpEnvironment> pqp (new PqpEnvironment(
+        {"models/abb-irb-120/1link.stl", "models/abb-irb-120/2link.stl",
+        "models/abb-irb-120/3link1.stl", "models/abb-irb-120/4link1.stl",
+        "models/abb-irb-120/5link.stl", "models/abb-irb-120/6link.stl"},
+        "models/abb-irb-120/parameters.txt",
+        "models/environment/obstacles_easy.stl",
+        generator.release(), 2200));
+    LazyPrm lazy_prm (pqp.release(), start_easy2, end_easy2, 25);
+
+    std::string logname ("logs/lazy_easy2/bubble" + std::to_string(i));
+    if(lazy_prm.BuildTree(logname)) {
+      auto end_t = std::chrono::steady_clock::now();
+      auto duration = end_t - start_t;
+      timing += std::chrono::duration <double, std::milli> (duration).count();
+    }
+    else
+      --i;
+  }
+  logtimings += std::to_string(timing) + '\n';
+
+  // TEST LAZY EASY 2H
+  timing = 0.0;
+
+  for (unsigned i = 0; i < 100; ++i) {
+    auto start_t = std::chrono::steady_clock::now();
+    std::unique_ptr<RandomSpaceGeneratorInterface> generator (
+      new HaltonGenerator(limits));
+    std::unique_ptr<PqpEnvironment> pqp (new PqpEnvironment(
+        {"models/abb-irb-120/1link.stl", "models/abb-irb-120/2link.stl",
+        "models/abb-irb-120/3link1.stl", "models/abb-irb-120/4link1.stl",
+        "models/abb-irb-120/5link.stl", "models/abb-irb-120/6link.stl"},
+        "models/abb-irb-120/parameters.txt",
+        "models/environment/obstacles_easy.stl",
+        generator.release(), 2200));
+    LazyPrm lazy_prm (pqp.release(), start_easy2, end_easy2, 25);
+
+    std::string logname ("logs/lazy_easy2h/bubble" + std::to_string(i));
+    if(lazy_prm.BuildTree(logname)) {
+      auto end_t = std::chrono::steady_clock::now();
+      auto duration = end_t - start_t;
+      timing += std::chrono::duration <double, std::milli> (duration).count();
+    }
+    else
+      --i;
+  }
+  logtimings += std::to_string(timing) + '\n';
+
+  // TEST LAZY HARD 1
+  timing = 0.0;
+
+  for (unsigned i = 0; i < 100; ++i) {
+    auto start_t = std::chrono::steady_clock::now();
+    std::unique_ptr<RandomSpaceGeneratorInterface> generator (
+      new NaiveGenerator(limits));
+    std::unique_ptr<PqpEnvironment> pqp (new PqpEnvironment(
+        {"models/abb-irb-120/1link.stl", "models/abb-irb-120/2link.stl",
+        "models/abb-irb-120/3link1.stl", "models/abb-irb-120/4link1.stl",
+        "models/abb-irb-120/5link.stl", "models/abb-irb-120/6link.stl"},
+        "models/abb-irb-120/parameters.txt",
+        "models/environment/obstacles_hard.stl",
+        generator.release(), 4000));
+    LazyPrm lazy_prm (pqp.release(), start_hard1, end_hard1, 60);
+
+    std::string logname ("logs/lazy_hard1/bubble" + std::to_string(i));
+    if(lazy_prm.BuildTree(logname)) {
+      auto end_t = std::chrono::steady_clock::now();
+      auto duration = end_t - start_t;
+      timing += std::chrono::duration <double, std::milli> (duration).count();
+    }
+    else
+      --i;
+  }
+  logtimings += std::to_string(timing) + '\n';
+
+  // TEST LAZY HARD 1H
+  timing = 0.0;
+
+  for (unsigned i = 0; i < 100; ++i) {
+    auto start_t = std::chrono::steady_clock::now();
+    std::unique_ptr<RandomSpaceGeneratorInterface> generator (
+      new HaltonGenerator(limits));
+    std::unique_ptr<PqpEnvironment> pqp (new PqpEnvironment(
+        {"models/abb-irb-120/1link.stl", "models/abb-irb-120/2link.stl",
+        "models/abb-irb-120/3link1.stl", "models/abb-irb-120/4link1.stl",
+        "models/abb-irb-120/5link.stl", "models/abb-irb-120/6link.stl"},
+        "models/abb-irb-120/parameters.txt",
+        "models/environment/obstacles_hard.stl",
+        generator.release(), 4000));
+    LazyPrm lazy_prm (pqp.release(), start_hard1, end_hard1, 60);
+
+    std::string logname ("logs/lazy_hard1h/bubble" + std::to_string(i));
+    if(lazy_prm.BuildTree(logname)) {
+      auto end_t = std::chrono::steady_clock::now();
+      auto duration = end_t - start_t;
+      timing += std::chrono::duration <double, std::milli> (duration).count();
+    }
+    else
+      --i;
+  }
+  logtimings += std::to_string(timing) + '\n';
+
+  // TEST LAZY HARD 2
+  timing = 0.0;
+
+  for (unsigned i = 0; i < 100; ++i) {
+    auto start_t = std::chrono::steady_clock::now();
+    std::unique_ptr<RandomSpaceGeneratorInterface> generator (
+      new NaiveGenerator(limits));
+    std::unique_ptr<PqpEnvironment> pqp (new PqpEnvironment(
+        {"models/abb-irb-120/1link.stl", "models/abb-irb-120/2link.stl",
+        "models/abb-irb-120/3link1.stl", "models/abb-irb-120/4link1.stl",
+        "models/abb-irb-120/5link.stl", "models/abb-irb-120/6link.stl"},
+        "models/abb-irb-120/parameters.txt",
+        "models/environment/obstacles_hard.stl",
+        generator.release(), 4000));
+    LazyPrm lazy_prm (pqp.release(), start_hard2, end_hard2, 60);
+
+    std::string logname ("logs/lazy_hard2/bubble" + std::to_string(i));
+    if(lazy_prm.BuildTree(logname)) {
+      auto end_t = std::chrono::steady_clock::now();
+      auto duration = end_t - start_t;
+      timing += std::chrono::duration <double, std::milli> (duration).count();
+    }
+    else
+      --i;
+  }
+  logtimings += std::to_string(timing) + '\n';
+
+  // TEST LAZY HARD 2H
+  timing = 0.0;
+
+  for (unsigned i = 0; i < 100; ++i) {
+    auto start_t = std::chrono::steady_clock::now();
+    std::unique_ptr<RandomSpaceGeneratorInterface> generator (
+      new HaltonGenerator(limits));
+    std::unique_ptr<PqpEnvironment> pqp (new PqpEnvironment(
+        {"models/abb-irb-120/1link.stl", "models/abb-irb-120/2link.stl",
+        "models/abb-irb-120/3link1.stl", "models/abb-irb-120/4link1.stl",
+        "models/abb-irb-120/5link.stl", "models/abb-irb-120/6link.stl"},
+        "models/abb-irb-120/parameters.txt",
+        "models/environment/obstacles_hard.stl",
+        generator.release(), 4000));
+    LazyPrm lazy_prm (pqp.release(), start_hard2, end_hard2, 60);
+
+    std::string logname ("logs/lazy_hard2h/bubble" + std::to_string(i));
+    if(lazy_prm.BuildTree(logname)) {
+      auto end_t = std::chrono::steady_clock::now();
+      auto duration = end_t - start_t;
+      timing += std::chrono::duration <double, std::milli> (duration).count();
+    }
+    else
+      --i;
+  }
+  logtimings += std::to_string(timing) + '\n';
+
+  std::ofstream logfile ("logs/logtimings");
+  logfile << logtimings;
   return 0;
 }
-

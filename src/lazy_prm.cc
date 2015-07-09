@@ -22,6 +22,8 @@
 #include <iostream>
 #include <chrono>
 
+namespace lazyprm {
+
 bool LazyPrm::ConnectPoints(int point1_index, int point2_index) {
   ++connects_;
   EVectorXd point1 = GetCoordinates(point1_index),
@@ -172,3 +174,5 @@ void LazyPrm::GeneratePath(const std::string& filename) {
   std::cout << "Trajectory successfully written!" << std::endl <<
                "--------------------------------" << std::endl << std::endl;
 }
+
+}  // namespace lazyprm

@@ -22,6 +22,8 @@
 #include <iostream>
 #include <chrono>
 
+namespace bubbleprm {
+
 struct QueueConnectorBubbleContainer {
   QueueConnectorBubbleContainer(const std::shared_ptr<Bubble>& bubble1,
                                 const BubblePrm::EVectorXd& hull_intersect1,
@@ -229,3 +231,5 @@ void BubblePrm::GeneratePath(const std::string& filename) {
   std::cout << "Trajectory successfully written!" << std::endl <<
                "--------------------------------" << std::endl << std::endl;
 }
+
+}  // namespace bubbleprm

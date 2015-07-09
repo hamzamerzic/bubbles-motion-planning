@@ -26,6 +26,8 @@
 #include "prm_tree.h"
 #include "environment/pqp_environment.h"
 
+namespace lazyprm {
+
 struct Edge {
   Edge(int point1_index, int point2_index, double weight,
        double extra_weight)
@@ -67,5 +69,7 @@ class LazyPrm : PrmTree {
   size_t connects_, adds_;
   std::priority_queue<Edge, std::vector<Edge>, EdgeCompareFunctor> pq_;
 };
+
+}  // namespace lazyprm
 
 #endif  // LAZY_PRM_H_INCLUDED

@@ -23,12 +23,15 @@
 #include <memory>
 #include <cmath>
 #include <chrono>
+#include <fstream>
 #include <iostream>
 
 #include "environment/pqp_environment.h"
 #include "random_generator/naive_generator.h"
 #include "random_generator/halton_generator.h"
 #include <boost/test/unit_test.hpp>
+
+using namespace bubbleprm;
 
 typedef Eigen::VectorXd EVectorXd;
 

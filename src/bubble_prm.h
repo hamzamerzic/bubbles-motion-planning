@@ -27,6 +27,8 @@
 #include "environment/pqp_environment.h"
 #include "bubble.h"
 
+namespace bubbleprm {
+
 struct Edge {
   Edge(int point1_index, int point2_index, double weight,
        double extra_weight)
@@ -67,5 +69,7 @@ class BubblePrm : PrmTree {
   size_t connects_, adds_;
   std::priority_queue<Edge, std::vector<Edge>, EdgeCompareFunctor> pq_;
 };
+
+}  // namespace bubbleprm
 
 #endif  // BUBBLE_PRM_H_INCLUDED
