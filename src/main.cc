@@ -43,6 +43,10 @@ int main() {
   limits.emplace_back(-2.094395102, 2.094395102);
   limits.emplace_back(-6.981317008, 6.981317008);
 
+  std::vector<std::pair<double, double>> limits_twoseg;
+  limits_twoseg.emplace_back(0, 3.1416);
+  limits_twoseg.emplace_back(-2.618, 2.618);
+
   // Configurations trivial 1
   EVectorXd start_trivial1 (6); start_trivial1 << -0.7330382858,   // -42
                                                   -0.5235987756,   // -30
@@ -127,10 +131,19 @@ int main() {
                                         0.7330382858,  // 42
                                         3.839724354;   // 220
 
+  EVectorXd start_twoseg (2); start_twoseg << 0.0,
+                                              0.0;
+
+  EVectorXd end_twoseg (2); end_twoseg << 1.9897,
+                                          0.0;
+
+  double timing;
+  const int test_num = 10;
+
   // TEST BUBBLE TRIVIAL 1
-  double timing = 0.0;
+  timing = 0.0;
   std::string logtimings;
-  for (unsigned i = 0; i < 100; ++i) {
+  for (unsigned i = 0; i < test_num; ++i) {
     auto start_t = std::chrono::steady_clock::now();
     std::unique_ptr<RandomSpaceGeneratorInterface> generator (
       new NaiveGenerator(limits));
@@ -152,12 +165,12 @@ int main() {
     else
       --i;
   }
-  logtimings += std::to_string(timing) + '\n';
+  logtimings += "BTRIVIAL1R " + std::to_string(timing) + '\n';
 
   // TEST BUBBLE TRIVIAL 1H
   timing = 0.0;
 
-  for (unsigned i = 0; i < 100; ++i) {
+  for (unsigned i = 0; i < test_num; ++i) {
     auto start_t = std::chrono::steady_clock::now();
     std::unique_ptr<RandomSpaceGeneratorInterface> generator (
       new HaltonGenerator(limits));
@@ -179,12 +192,12 @@ int main() {
     else
       --i;
   }
-  logtimings += std::to_string(timing) + '\n';
+  logtimings += "BTRIVIAL1H " + std::to_string(timing) + '\n';
 
   // TEST BUBBLE TRIVIAL 2
   timing = 0.0;
 
-  for (unsigned i = 0; i < 100; ++i) {
+  for (unsigned i = 0; i < test_num; ++i) {
     auto start_t = std::chrono::steady_clock::now();
     std::unique_ptr<RandomSpaceGeneratorInterface> generator (
       new NaiveGenerator(limits));
@@ -206,12 +219,12 @@ int main() {
     else
       --i;
   }
-  logtimings += std::to_string(timing) + '\n';
+  logtimings += "BTRIVIAL2R " + std::to_string(timing) + '\n';
 
   // TEST BUBBLE TRIVIAL 2H
   timing = 0.0;
 
-  for (unsigned i = 0; i < 100; ++i) {
+  for (unsigned i = 0; i < test_num; ++i) {
     auto start_t = std::chrono::steady_clock::now();
     std::unique_ptr<RandomSpaceGeneratorInterface> generator (
       new HaltonGenerator(limits));
@@ -233,12 +246,12 @@ int main() {
     else
       --i;
   }
-  logtimings += std::to_string(timing) + '\n';
+  logtimings += "BTRIVIAL2H " + std::to_string(timing) + '\n';
 
   // TEST BUBBLE EASY 1
   timing = 0.0;
 
-  for (unsigned i = 0; i < 100; ++i) {
+  for (unsigned i = 0; i < test_num; ++i) {
     auto start_t = std::chrono::steady_clock::now();
     std::unique_ptr<RandomSpaceGeneratorInterface> generator (
       new NaiveGenerator(limits));
@@ -260,12 +273,12 @@ int main() {
     else
       --i;
   }
-  logtimings += std::to_string(timing) + '\n';
+  logtimings += "BEASY1R " + std::to_string(timing) + '\n';
 
   // TEST BUBBLE EASY 1H
   timing = 0.0;
 
-  for (unsigned i = 0; i < 100; ++i) {
+  for (unsigned i = 0; i < test_num; ++i) {
     auto start_t = std::chrono::steady_clock::now();
     std::unique_ptr<RandomSpaceGeneratorInterface> generator (
       new HaltonGenerator(limits));
@@ -287,12 +300,12 @@ int main() {
     else
       --i;
   }
-  logtimings += std::to_string(timing) + '\n';
+  logtimings += "BEASY1H " + std::to_string(timing) + '\n';
 
   // TEST BUBBLE EASY 2
   timing = 0.0;
 
-  for (unsigned i = 0; i < 100; ++i) {
+  for (unsigned i = 0; i < test_num; ++i) {
     auto start_t = std::chrono::steady_clock::now();
     std::unique_ptr<RandomSpaceGeneratorInterface> generator (
       new NaiveGenerator(limits));
@@ -314,12 +327,12 @@ int main() {
     else
       --i;
   }
-  logtimings += std::to_string(timing) + '\n';
+  logtimings += "BEASY2R " + std::to_string(timing) + '\n';
 
   // TEST BUBBLE EASY 2H
   timing = 0.0;
 
-  for (unsigned i = 0; i < 100; ++i) {
+  for (unsigned i = 0; i < test_num; ++i) {
     auto start_t = std::chrono::steady_clock::now();
     std::unique_ptr<RandomSpaceGeneratorInterface> generator (
       new HaltonGenerator(limits));
@@ -341,12 +354,12 @@ int main() {
     else
       --i;
   }
-  logtimings += std::to_string(timing) + '\n';
+  logtimings += "BEASY2H " + std::to_string(timing) + '\n';
 
   // TEST BUBBLE HARD 1
   timing = 0.0;
 
-  for (unsigned i = 0; i < 100; ++i) {
+  for (unsigned i = 0; i < test_num; ++i) {
     auto start_t = std::chrono::steady_clock::now();
     std::unique_ptr<RandomSpaceGeneratorInterface> generator (
       new NaiveGenerator(limits));
@@ -368,12 +381,12 @@ int main() {
     else
       --i;
   }
-  logtimings += std::to_string(timing) + '\n';
+  logtimings += "BHARD1R " + std::to_string(timing) + '\n';
 
   // TEST BUBBLE HARD 1H
   timing = 0.0;
 
-  for (unsigned i = 0; i < 100; ++i) {
+  for (unsigned i = 0; i < test_num; ++i) {
     auto start_t = std::chrono::steady_clock::now();
     std::unique_ptr<RandomSpaceGeneratorInterface> generator (
       new HaltonGenerator(limits));
@@ -395,12 +408,12 @@ int main() {
     else
       --i;
   }
-  logtimings += std::to_string(timing) + '\n';
+  logtimings += "BHARD1H " + std::to_string(timing) + '\n';
 
   // TEST BUBBLE HARD 2
   timing = 0.0;
 
-  for (unsigned i = 0; i < 100; ++i) {
+  for (unsigned i = 0; i < test_num; ++i) {
     auto start_t = std::chrono::steady_clock::now();
     std::unique_ptr<RandomSpaceGeneratorInterface> generator (
       new NaiveGenerator(limits));
@@ -422,12 +435,12 @@ int main() {
     else
       --i;
   }
-  logtimings += std::to_string(timing) + '\n';
+  logtimings += "BHARD2R " + std::to_string(timing) + '\n';
 
   // TEST BUBBLE HARD 2H
   timing = 0.0;
 
-  for (unsigned i = 0; i < 100; ++i) {
+  for (unsigned i = 0; i < test_num; ++i) {
     auto start_t = std::chrono::steady_clock::now();
     std::unique_ptr<RandomSpaceGeneratorInterface> generator (
       new HaltonGenerator(limits));
@@ -449,12 +462,12 @@ int main() {
     else
       --i;
   }
-  logtimings += std::to_string(timing) + '\n';
+  logtimings += "BHARD2H " + std::to_string(timing) + '\n';
 
   // TEST LAZY TRIVIAL 1
   timing = 0.0;
 
-  for (unsigned i = 0; i < 100; ++i) {
+  for (unsigned i = 0; i < test_num; ++i) {
     auto start_t = std::chrono::steady_clock::now();
     std::unique_ptr<RandomSpaceGeneratorInterface> generator (
       new NaiveGenerator(limits));
@@ -476,12 +489,12 @@ int main() {
     else
       --i;
   }
-  logtimings += std::to_string(timing) + '\n';
+  logtimings += "LTRIVIAL1R " + std::to_string(timing) + '\n';
 
   // TEST LAZY TRIVIAL 1H
   timing = 0.0;
 
-  for (unsigned i = 0; i < 100; ++i) {
+  for (unsigned i = 0; i < test_num; ++i) {
     auto start_t = std::chrono::steady_clock::now();
     std::unique_ptr<RandomSpaceGeneratorInterface> generator (
       new HaltonGenerator(limits));
@@ -503,12 +516,12 @@ int main() {
     else
       --i;
   }
-  logtimings += std::to_string(timing) + '\n';
+  logtimings += "LTRIVIAL1H " + std::to_string(timing) + '\n';
 
   // TEST LAZY TRIVIAL 2
   timing = 0.0;
 
-  for (unsigned i = 0; i < 100; ++i) {
+  for (unsigned i = 0; i < test_num; ++i) {
     auto start_t = std::chrono::steady_clock::now();
     std::unique_ptr<RandomSpaceGeneratorInterface> generator (
       new NaiveGenerator(limits));
@@ -530,12 +543,12 @@ int main() {
     else
       --i;
   }
-  logtimings += std::to_string(timing) + '\n';
+  logtimings += "LTRIVIAL2R " + std::to_string(timing) + '\n';
 
   // TEST LAZY TRIVIAL 2H
   timing = 0.0;
 
-  for (unsigned i = 0; i < 100; ++i) {
+  for (unsigned i = 0; i < test_num; ++i) {
     auto start_t = std::chrono::steady_clock::now();
     std::unique_ptr<RandomSpaceGeneratorInterface> generator (
       new HaltonGenerator(limits));
@@ -557,12 +570,12 @@ int main() {
     else
       --i;
   }
-  logtimings += std::to_string(timing) + '\n';
+  logtimings += "LTRIVIAL2H " + std::to_string(timing) + '\n';
 
   // TEST LAZY EASY 1
   timing = 0.0;
 
-  for (unsigned i = 0; i < 100; ++i) {
+  for (unsigned i = 0; i < test_num; ++i) {
     auto start_t = std::chrono::steady_clock::now();
     std::unique_ptr<RandomSpaceGeneratorInterface> generator (
       new NaiveGenerator(limits));
@@ -584,12 +597,12 @@ int main() {
     else
       --i;
   }
-  logtimings += std::to_string(timing) + '\n';
+  logtimings += "LEASY1R " + std::to_string(timing) + '\n';
 
   // TEST LAZY EASY 1H
   timing = 0.0;
 
-  for (unsigned i = 0; i < 100; ++i) {
+  for (unsigned i = 0; i < test_num; ++i) {
     auto start_t = std::chrono::steady_clock::now();
     std::unique_ptr<RandomSpaceGeneratorInterface> generator (
       new HaltonGenerator(limits));
@@ -611,12 +624,12 @@ int main() {
     else
       --i;
   }
-  logtimings += std::to_string(timing) + '\n';
+  logtimings += "LEASY1H " + std::to_string(timing) + '\n';
 
   // TEST LAZY EASY 2
   timing = 0.0;
 
-  for (unsigned i = 0; i < 100; ++i) {
+  for (unsigned i = 0; i < test_num; ++i) {
     auto start_t = std::chrono::steady_clock::now();
     std::unique_ptr<RandomSpaceGeneratorInterface> generator (
       new NaiveGenerator(limits));
@@ -638,12 +651,12 @@ int main() {
     else
       --i;
   }
-  logtimings += std::to_string(timing) + '\n';
+  logtimings += "LEASY2R " + std::to_string(timing) + '\n';
 
   // TEST LAZY EASY 2H
   timing = 0.0;
 
-  for (unsigned i = 0; i < 100; ++i) {
+  for (unsigned i = 0; i < test_num; ++i) {
     auto start_t = std::chrono::steady_clock::now();
     std::unique_ptr<RandomSpaceGeneratorInterface> generator (
       new HaltonGenerator(limits));
@@ -665,12 +678,12 @@ int main() {
     else
       --i;
   }
-  logtimings += std::to_string(timing) + '\n';
+  logtimings += "LEASY2H " + std::to_string(timing) + '\n';
 
   // TEST LAZY HARD 1
   timing = 0.0;
 
-  for (unsigned i = 0; i < 100; ++i) {
+  for (unsigned i = 0; i < test_num; ++i) {
     auto start_t = std::chrono::steady_clock::now();
     std::unique_ptr<RandomSpaceGeneratorInterface> generator (
       new NaiveGenerator(limits));
@@ -692,12 +705,12 @@ int main() {
     else
       --i;
   }
-  logtimings += std::to_string(timing) + '\n';
+  logtimings += "LHARD1R " + std::to_string(timing) + '\n';
 
   // TEST LAZY HARD 1H
   timing = 0.0;
 
-  for (unsigned i = 0; i < 100; ++i) {
+  for (unsigned i = 0; i < test_num; ++i) {
     auto start_t = std::chrono::steady_clock::now();
     std::unique_ptr<RandomSpaceGeneratorInterface> generator (
       new HaltonGenerator(limits));
@@ -719,12 +732,12 @@ int main() {
     else
       --i;
   }
-  logtimings += std::to_string(timing) + '\n';
+  logtimings += "LHARD1H " + std::to_string(timing) + '\n';
 
   // TEST LAZY HARD 2
   timing = 0.0;
 
-  for (unsigned i = 0; i < 100; ++i) {
+  for (unsigned i = 0; i < test_num; ++i) {
     auto start_t = std::chrono::steady_clock::now();
     std::unique_ptr<RandomSpaceGeneratorInterface> generator (
       new NaiveGenerator(limits));
@@ -746,12 +759,12 @@ int main() {
     else
       --i;
   }
-  logtimings += std::to_string(timing) + '\n';
+  logtimings += "LHARD2R " + std::to_string(timing) + '\n';
 
   // TEST LAZY HARD 2H
   timing = 0.0;
 
-  for (unsigned i = 0; i < 100; ++i) {
+  for (unsigned i = 0; i < test_num; ++i) {
     auto start_t = std::chrono::steady_clock::now();
     std::unique_ptr<RandomSpaceGeneratorInterface> generator (
       new HaltonGenerator(limits));
@@ -773,9 +786,109 @@ int main() {
     else
       --i;
   }
-  logtimings += std::to_string(timing) + '\n';
+  logtimings += "LHARD2H " + std::to_string(timing) + '\n';
+
+  // TEST BUBBLE TWO SEG 1
+  timing = 0.0;
+
+  for (unsigned i = 0; i < test_num; ++i) {
+    auto start_t = std::chrono::steady_clock::now();
+    std::unique_ptr<RandomSpaceGeneratorInterface> generator (
+      new HaltonGenerator(limits_twoseg));
+    std::unique_ptr<PqpEnvironment> pqp (new PqpEnvironment(
+        {"models/two-seg/bmp_seg1.stl", "models/two-seg/bmp_seg2.stl"},
+        "models/two-seg/bmp_dh_table.txt",
+        "models/environment/obstacles_twoseg.stl",
+        generator.release(), 1000));
+    BubblePrm bubble_prm (pqp.release(), start_twoseg, end_twoseg, 15);
+    std::string logname ("logs/twossegbbbb/" + std::to_string(i));
+    if(bubble_prm.BuildTree(logname)) {
+      auto end_t = std::chrono::steady_clock::now();
+      auto duration = end_t - start_t;
+      timing += std::chrono::duration <double, std::milli> (duration).count();
+    }
+    else
+      --i;
+  }
+  logtimings += "BTWOSEG1R " + std::to_string(timing) + '\n';
+
+  // TEST BUBBLE TWO SEG 1H
+  timing = 0.0;
+
+  for (unsigned i = 0; i < test_num; ++i) {
+    auto start_t = std::chrono::steady_clock::now();
+    std::unique_ptr<RandomSpaceGeneratorInterface> generator (
+      new HaltonGenerator(limits_twoseg));
+    std::unique_ptr<PqpEnvironment> pqp (new PqpEnvironment(
+        {"models/two-seg/bmp_seg1.stl", "models/two-seg/bmp_seg2.stl"},
+        "models/two-seg/bmp_dh_table.txt",
+        "models/environment/obstacles_twoseg.stl",
+        generator.release(), 1000));
+    BubblePrm bubble_prm (pqp.release(), start_twoseg, end_twoseg, 15);
+
+    std::string logname ("logs/twosegbh/" + std::to_string(i));
+    if(bubble_prm.BuildTree(logname)) {
+      auto end_t = std::chrono::steady_clock::now();
+      auto duration = end_t - start_t;
+      timing += std::chrono::duration <double, std::milli> (duration).count();
+    }
+    else
+      --i;
+  }
+  logtimings += "BTWOSEG1H " + std::to_string(timing) + '\n';
+
+  // TEST LAZY TWO SEG 1
+  timing = 0.0;
+
+  for (unsigned i = 0; i < test_num; ++i) {
+    auto start_t = std::chrono::steady_clock::now();
+    std::unique_ptr<RandomSpaceGeneratorInterface> generator (
+      new NaiveGenerator(limits_twoseg));
+    std::unique_ptr<PqpEnvironment> pqp (new PqpEnvironment(
+        {"models/two-seg/bmp_seg1.stl", "models/two-seg/bmp_seg2.stl"},
+        "models/two-seg/bmp_dh_table.txt",
+        "models/environment/obstacles_twoseg.stl",
+        generator.release(), 1000));
+    LazyPrm lazy_prm (pqp.release(), start_twoseg, end_twoseg, 15);
+
+    std::string logname ("logs/twosegl/" + std::to_string(i));
+    if(lazy_prm.BuildTree(logname)) {
+      auto end_t = std::chrono::steady_clock::now();
+      auto duration = end_t - start_t;
+      timing += std::chrono::duration <double, std::milli> (duration).count();
+    }
+    else
+      --i;
+  }
+  logtimings += "LTWOSEG1R " + std::to_string(timing) + '\n';
+
+  // TEST LAZY TWO SEG 1H
+  timing = 0.0;
+
+  for (unsigned i = 0; i < test_num; ++i) {
+    auto start_t = std::chrono::steady_clock::now();
+    std::unique_ptr<RandomSpaceGeneratorInterface> generator (
+      new HaltonGenerator(limits_twoseg));
+    std::unique_ptr<PqpEnvironment> pqp (new PqpEnvironment(
+        {"models/two-seg/bmp_seg1.stl", "models/two-seg/bmp_seg2.stl"},
+        "models/two-seg/bmp_dh_table.txt",
+        "models/environment/obstacles_twoseg.stl",
+        generator.release(), 1000));
+    LazyPrm lazy_prm (pqp.release(), start_twoseg, end_twoseg, 15);
+
+    std::string logname ("logs/twoseglh/" + std::to_string(i));
+    if(lazy_prm.BuildTree(logname)) {
+      auto end_t = std::chrono::steady_clock::now();
+      auto duration = end_t - start_t;
+      timing += std::chrono::duration <double, std::milli> (duration).count();
+    }
+    else
+      --i;
+  }
+  logtimings += "LTWOSEG1H " + std::to_string(timing) + '\n';
 
   std::ofstream logfile ("logs/logtimings");
   logfile << logtimings;
+
   return 0;
 }
