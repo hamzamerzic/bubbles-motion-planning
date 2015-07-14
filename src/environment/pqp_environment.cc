@@ -188,10 +188,9 @@ bool PqpEnvironment::MakeBubble(const EVectorXd& coordinates,
 
   // Update bubble dimensions
   for (size_t i = 1; i < dimension_; ++i) {
-    R_temp = R_temp * Eigen::AngleAxisf(coordinates[i - 1], EVector::UnitZ());
-    dh_table_.at(i - 1).Transform(R_temp, T_temp);
-    R = R_temp;
-    T = T_temp;
+    R = EMatrix::Identity();
+    T << 0.0, 0.0, 0.0;
+
     axis_distance = 0.0;
     prev_endpoint.setZero();
     for (size_t k = i; k < dimension_; ++k) {
